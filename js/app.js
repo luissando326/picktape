@@ -151,23 +151,88 @@ function showManualFallback() {
   document.getElementById("manual-fallback").classList.remove("hidden");
 }
 
+// ── LEGS STATE ────────────────────────────────────────────────
+let legs = []; // [{ fighter, opponent, odds, movType }]
+
+function isMoV() {
+  return document.getElementById("inp-series").value === "Method of Victory";
+}
+
+function updateParlayOdds() {
+  const display = document.getElementById("parlay-odds-display");
+  const valEl   = document.getElementById("parlay-odds-val");
+  if (legs.length === 0) { display.style.display = "none"; return; }
+  display.style.display = "flex";
+
+  // Convert all legs to decimal, multiply, convert back to American
+  const combined = legs.reduce((acc, leg) => {
+    const n = parseInt(leg.odds);
+    const dec = n > 0 ? (n / 100) + 1 : (100 / Math.abs(n)) + 1;
+    return acc * dec;
+  }, 1);
+
+  let american;
+  if (combined >= 2) {
+    american = Math.round((combined - 1) * 100);
+    valEl.textContent = `+${american}`;
+    valEl.className   = "parlay-odds-num positive";
+  } else {
+    american = Math.round(-100 / (combined - 1));
+    valEl.textContent = `${american}`;
+    valEl.className   = "parlay-odds-num";
+  }
+}
+
+function renderLegs() {
+  const list = document.getElementById("legs-list");
+  list.innerHTML = "";
+  legs.forEach((leg, i) => {
+    const row = document.createElement("div");
+    row.className = "leg-item";
+    const movLabel = leg.movType ? ` · <span class="mov-tag">${leg.movType}</span>` : "";
+    row.innerHTML = `
+      <div class="leg-item-info">
+        <span class="leg-num">${i + 1}</span>
+        <span class="leg-fighter">${leg.fighter}</span>
+        ${leg.opponent ? `<span class="leg-vs">vs ${leg.opponent}</span>` : ""}
+        ${movLabel}
+      </div>
+      <div class="leg-odds ${parseInt(leg.odds) > 0 ? "positive" : ""}">${parseInt(leg.odds) > 0 ? "+" : ""}${leg.odds}</div>
+      <button class="leg-remove" data-idx="${i}">✕</button>
+    `;
+    list.appendChild(row);
+  });
+
+  list.querySelectorAll(".leg-remove").forEach(btn => {
+    btn.addEventListener("click", () => {
+      legs.splice(parseInt(btn.dataset.idx), 1);
+      renderLegs();
+      updateParlayOdds();
+    });
+  });
+
+  updateParlayOdds();
+}
+
 // Event selected → populate fights
 eventSelect.addEventListener("change", () => {
   const idx = eventSelect.value;
   fightSection.classList.add("hidden");
   fighterSelect.innerHTML = '<option value="">— Select a fighter —</option>';
   fightSelect.innerHTML   = '<option value="">— Select a fight —</option>';
+  legs = [];
+  renderLegs();
   selectedFight = null;
 
   const manualFallback = document.getElementById("manual-fallback");
 
   if (idx === "manual") {
     manualFallback.classList.remove("hidden");
+    fightSection.classList.remove("hidden");
     return;
   }
 
   manualFallback.classList.add("hidden");
-
   if (idx === "") return;
 
   const event        = ufcEvents[parseInt(idx)];
@@ -185,10 +250,10 @@ eventSelect.addEventListener("change", () => {
     const f1  = competitors[0]?.athlete?.displayName || competitors[0]?.team?.displayName || "Fighter 1";
     const f2  = competitors[1]?.athlete?.displayName || competitors[1]?.team?.displayName || "Fighter 2";
     const opt = document.createElement("option");
-    opt.value        = cidx;
-    opt.textContent  = `${f1}  vs  ${f2}`;
-    opt.dataset.f1   = f1;
-    opt.dataset.f2   = f2;
+    opt.value       = cidx;
+    opt.textContent = `${f1}  vs  ${f2}`;
+    opt.dataset.f1  = f1;
+    opt.dataset.f2  = f2;
     fightSelect.appendChild(opt);
   });
 
@@ -207,12 +272,46 @@ fightSelect.addEventListener("change", () => {
   const f2  = opt.dataset.f2;
   selectedFight = { fighter1: f1, fighter2: f2 };
 
-  [[f1, f1], [f2, f2], [`${f1} + ${f2} (Parlay Leg)`, "parlay"]].forEach(([label, val]) => {
+  [f1, f2].forEach(f => {
     const o = document.createElement("option");
-    o.value = val === "parlay" ? `${f1} + ${f2}` : val;
-    o.textContent = label;
+    o.value = f; o.textContent = f;
     fighterSelect.appendChild(o);
   });
+});
+
+// Series change → toggle MoV method field
+document.getElementById("inp-series").addEventListener("change", () => {
+  const movField = document.getElementById("mov-type-field");
+  movField.style.display = isMoV() ? "flex" : "none";
+  legs = [];
+  renderLegs();
+});
+
+// Add Leg button
+document.getElementById("add-leg-btn").addEventListener("click", () => {
+  const fighter  = fighterSelect.value || document.getElementById("inp-event-manual")?.value?.trim();
+  const oddsRaw  = document.getElementById("inp-leg-odds").value.trim();
+  const odds     = parseInt(oddsRaw);
+
+  if (!fighter || isNaN(odds)) {
+    document.getElementById("form-error").classList.remove("hidden");
+    return;
+  }
+  document.getElementById("form-error").classList.add("hidden");
+
+  const movType  = isMoV() ? document.getElementById("inp-mov-type").value : null;
+  const opponent = selectedFight
+    ? (selectedFight.fighter1 === fighter ? selectedFight.fighter2 : selectedFight.fighter1)
+    : "";
+
+  legs.push({ fighter, opponent, odds: odds.toString(), movType });
+  renderLegs();
+
+  // Reset leg row
+  fighterSelect.innerHTML = '<option value="">— Select a fighter —</option>';
+  fightSelect.value = "";
+  document.getElementById("inp-leg-odds").value = "";
+  selectedFight = null;
 });
 
 // ── FIRESTORE ─────────────────────────────────────────────────
@@ -246,57 +345,93 @@ async function deletePick(id) {
 
 // ── ADD PICK ──────────────────────────────────────────────────
 addPickBtn.addEventListener("click", async () => {
-  const fighter  = fighterSelect.value || document.getElementById("inp-fighter-manual").value.trim();
-  const oddsRaw  = inpOdds.value.trim();
-  const type     = inpType.value;
-  const notes    = inpNotes.value.trim();
-  const odds     = parseInt(oddsRaw);
+  const notes    = document.getElementById("inp-notes").value.trim();
+  const series   = document.getElementById("inp-series").value;
+  const errorEl  = document.getElementById("form-error");
 
+  // Need at least one leg
+  if (legs.length === 0) {
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  errorEl.classList.add("hidden");
+
+  // Get event name
   const eventIdx = eventSelect.value;
-  let eventName  = document.getElementById("inp-event-manual").value.trim();
+  let eventName  = document.getElementById("inp-event-manual")?.value?.trim() || "";
   if (eventIdx !== "" && eventIdx !== "manual" && ufcEvents[parseInt(eventIdx)]) {
     const e = ufcEvents[parseInt(eventIdx)];
     eventName = e.shortName || e.name || eventName;
   }
 
-  if (!fighter || isNaN(odds)) {
-    formError.classList.remove("hidden");
-    return;
+  // Determine type and combined odds
+  const isParlay  = legs.length > 1;
+  const isMoVSeries = series === "Method of Victory";
+  let type, oddsVal;
+
+  if (isMoVSeries) {
+    type = legs[0]?.movType || "KO";
+  } else {
+    type = isParlay ? "Parlay" : "Single";
   }
 
-  formError.classList.add("hidden");
+  if (isParlay) {
+    // Calculate combined parlay odds
+    const combined = legs.reduce((acc, leg) => {
+      const n = parseInt(leg.odds);
+      const dec = n > 0 ? (n / 100) + 1 : (100 / Math.abs(n)) + 1;
+      return acc * dec;
+    }, 1);
+    oddsVal = combined >= 2
+      ? Math.round((combined - 1) * 100)
+      : -Math.round(100 / (combined - 1));
+  } else {
+    oddsVal = parseInt(legs[0].odds);
+  }
+
+  // Build fighter label
+  const fighter = legs.map(l => {
+    if (isMoVSeries && l.movType) return `${l.fighter} by ${l.movType}`;
+    return l.fighter;
+  }).join(" + ");
+
+  const opponent = legs.length === 1 ? legs[0].opponent : "";
+
   addPickBtn.disabled    = true;
   addPickBtn.textContent = "Saving...";
 
   try {
-    const opponent = selectedFight
-      ? (selectedFight.fighter1 === fighter ? selectedFight.fighter2 : selectedFight.fighter1)
-      : "";
-
-    const data = { fighter, odds, event: eventName, type, notes, series: document.getElementById("inp-series").value, result: "pending", date: new Date().toISOString(), opponent };
-    const id   = await savePick(data);
+    const data = {
+      fighter, odds: oddsVal, event: eventName, type, notes,
+      series, result: "pending", date: new Date().toISOString(),
+      opponent, legs: [...legs]
+    };
+    const id = await savePick(data);
     picks.unshift({ id, ...data });
     renderAll();
 
-    // Reset
-    eventSelect.value     = "";
-    fightSelect.innerHTML = '<option value="">— Select a fight —</option>';
+    // Reset form
+    eventSelect.value = "";
+    fightSelect.innerHTML   = '<option value="">— Select a fight —</option>';
     fighterSelect.innerHTML = '<option value="">— Select a fighter —</option>';
     fightSection.classList.add("hidden");
     document.getElementById("manual-fallback").classList.add("hidden");
-    document.getElementById("inp-fighter-manual").value = "";
-    document.getElementById("inp-event-manual").value   = "";
-    document.getElementById("inp-series").value         = "General";
-    inpOdds.value  = "";
-    inpNotes.value = "";
-    selectedFight  = null;
+    document.getElementById("inp-event-manual") && (document.getElementById("inp-event-manual").value = "");
+    document.getElementById("inp-leg-odds").value = "";
+    document.getElementById("inp-notes").value    = "";
+    document.getElementById("inp-series").value   = "General";
+    document.getElementById("mov-type-field").style.display = "none";
+    document.getElementById("parlay-odds-display").style.display = "none";
+    legs          = [];
+    selectedFight = null;
+    renderLegs();
   } catch (err) {
     console.error("Error saving:", err);
     alert("Error saving pick. Check your connection.");
   }
 
   addPickBtn.disabled    = false;
-  addPickBtn.textContent = "+ Add Pick";
+  addPickBtn.textContent = "+ Log Pick";
 });
 
 // ── SET RESULT ────────────────────────────────────────────────
@@ -381,7 +516,10 @@ function buildPickCard(pick, showResultBtns) {
   const opponentHTML = pick.opponent ? `<span class="vs-tag">vs ${pick.opponent}</span>` : "";
   const notesHTML    = pick.notes    ? `<div class="pick-notes">"${pick.notes}"</div>`    : "";
   const series       = pick.series || "General";
-  const seriesClass  = series === "Practical Parlay" ? "series-pp" : series === "Sped Parlay" ? "series-sp" : "series-gen";
+  const seriesClass  = series === "Practical Parlay" ? "series-pp"
+                     : series === "Sped Parlay"       ? "series-sp"
+                     : series === "Method of Victory" ? "series-mov"
+                     : "series-gen";
   const seriesHTML   = `<span class="series-badge ${seriesClass}">${series}</span>`;
 
   const actionsHTML = showResultBtns

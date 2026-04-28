@@ -342,7 +342,89 @@ html, body {
 .series-pill--pp:hover  { border-color: #4ecb71; color: #4ecb71; }
 .series-pill--sp:hover  { border-color: #a855f7; color: #a855f7; }
 
-/* ── SERIES BADGES (on pick cards) ──────── */
+.series-pill--mov.active { background: rgba(240,168,64,0.15); border-color: var(--amber); color: var(--amber); }
+.series-pill--mov:hover  { border-color: var(--amber); color: var(--amber); }
+.series-mov { background: rgba(240,168,64,0.12); color: var(--amber); }
+
+/* ── PARLAY BUILDER ──────────────────────── */
+.step-label-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.step-label-row .step-label { margin-bottom: 0; }
+
+.parlay-odds-display {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text3);
+  letter-spacing: 0.06em;
+}
+.parlay-odds-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 20px;
+  color: var(--text2);
+}
+.parlay-odds-num.positive { color: var(--green); }
+
+.leg-builder { margin-bottom: 12px; }
+
+.btn-secondary {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  background: transparent; border: 1px solid var(--border2);
+  color: var(--text2); border-radius: var(--radius);
+  padding: 9px 16px; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap; align-self: flex-end;
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+.legs-list {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 8px;
+}
+.leg-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 9px 12px;
+  animation: fadeIn 0.15s ease;
+}
+.leg-item-info {
+  flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.leg-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 11px;
+  background: var(--border2); color: var(--text3);
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.leg-fighter {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 15px;
+  text-transform: uppercase; letter-spacing: 0.02em;
+}
+.leg-vs { font-size: 11px; color: var(--text3); }
+.mov-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 3px;
+  background: rgba(240,168,64,0.12); color: var(--amber);
+}
+.leg-odds {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 14px;
+  color: var(--text2); min-width: 50px; text-align: right;
+}
+.leg-odds.positive { color: var(--green); }
+.leg-remove {
+  background: transparent; border: none;
+  color: var(--text3); cursor: pointer; font-size: 13px;
+  padding: 2px 6px; border-radius: 4px; transition: color 0.12s;
+}
+.leg-remove:hover { color: var(--red); }
+
+/* ── SERIES BADGES ───────────────────────── */
 .series-badge {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 10px; font-weight: 700;
@@ -352,6 +434,7 @@ html, body {
 .series-gen { background: var(--bg3); color: var(--text3); }
 .series-pp  { background: rgba(78,203,113,0.12); color: #4ecb71; }
 .series-sp  { background: rgba(168,85,247,0.12); color: #a855f7; }
+.series-mov { background: rgba(240,168,64,0.12); color: var(--amber); }
 
 /* ── DASHBOARD ───────────────────────────── */
 .dash-summary {
