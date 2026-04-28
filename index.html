@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,7 +21,6 @@
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
           <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
           <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          <path fill="none" d="M0 0h48v48H0z"/>
         </svg>
         Sign in with Google
       </button>
@@ -84,36 +84,77 @@
       <section id="tab-log" class="tab-section">
         <div class="section-title">New Pick</div>
         <div class="form-card">
-          <div class="form-row">
-            <div class="field">
-              <label>Fighter / Pick</label>
-              <input type="text" id="inp-fighter" placeholder="e.g. Adesanya, Poirier ML" />
+
+          <!-- Step 1: Event -->
+          <div class="form-step">
+            <div class="step-label">Step 1 — Select Event</div>
+            <div class="form-row">
+              <div class="field" style="flex:1;">
+                <label>Upcoming UFC Events <span id="event-loading" class="loading-tag hidden">Loading...</span></label>
+                <select id="inp-event-select">
+                  <option value="">Loading events...</option>
+                </select>
+              </div>
             </div>
-            <div class="field field-sm">
-              <label>Odds (American)</label>
-              <input type="text" id="inp-odds" placeholder="+180 or -140" />
-            </div>
-            <div class="field field-sm">
-              <label>Event</label>
-              <input type="text" id="inp-event" placeholder="UFC 314" />
-            </div>
-            <div class="field field-sm">
-              <label>Bet Type</label>
-              <select id="inp-type">
-                <option value="Single">Single</option>
-                <option value="Parlay">Parlay</option>
-                <option value="Prop">Prop</option>
-              </select>
+            <!-- Manual fallback -->
+            <div id="manual-fallback" class="manual-fallback hidden">
+              <div class="field">
+                <label>Event Name (manual)</label>
+                <input type="text" id="inp-event-manual" placeholder="e.g. UFC 314" />
+              </div>
+              <div class="field" style="margin-top:10px;">
+                <label>Fighter / Pick (manual)</label>
+                <input type="text" id="inp-fighter-manual" placeholder="e.g. Poirier, Adesanya ML" />
+              </div>
             </div>
           </div>
-          <div class="form-row" style="margin-top:12px;">
-            <div class="field" style="flex:1;">
-              <label>Notes (optional)</label>
-              <input type="text" id="inp-notes" placeholder="Reasoning, method pick, etc." />
+
+          <!-- Step 2: Fight -->
+          <div id="fight-section" class="form-step hidden" style="margin-top:16px;">
+            <div class="step-label">Step 2 — Select Fight</div>
+            <div class="form-row">
+              <div class="field" style="flex:1;">
+                <label>Fight</label>
+                <select id="inp-fight-select">
+                  <option value="">— Select a fight —</option>
+                </select>
+              </div>
+              <div class="field" style="flex:1;">
+                <label>Your Pick</label>
+                <select id="inp-fighter-select">
+                  <option value="">— Select a fighter —</option>
+                </select>
+              </div>
             </div>
-            <button class="btn-primary" id="add-pick-btn">+ Add Pick</button>
           </div>
-          <div id="form-error" class="form-error hidden">Please enter a fighter/pick name and valid American odds.</div>
+
+          <!-- Step 3: Details -->
+          <div class="form-step" style="margin-top:16px;">
+            <div class="step-label">Step 3 — Odds & Details</div>
+            <div class="form-row">
+              <div class="field field-sm">
+                <label>Odds (American)</label>
+                <input type="text" id="inp-odds" placeholder="+180 or -140" />
+              </div>
+              <div class="field field-sm">
+                <label>Bet Type</label>
+                <select id="inp-type">
+                  <option value="Single">Single</option>
+                  <option value="Parlay">Parlay</option>
+                  <option value="Prop">Prop</option>
+                </select>
+              </div>
+              <div class="field" style="flex:2;">
+                <label>Notes (optional)</label>
+                <input type="text" id="inp-notes" placeholder="Reasoning, method pick, etc." />
+              </div>
+              <button class="btn-primary" id="add-pick-btn">+ Add Pick</button>
+            </div>
+          </div>
+
+          <div id="form-error" class="form-error hidden">
+            Please select or enter a fighter and enter valid American odds (e.g. +180 or -140).
+          </div>
         </div>
       </section>
 
@@ -144,6 +185,9 @@
               <option value="Parlay">Parlays</option>
               <option value="Prop">Props</option>
             </select>
+            <select id="filter-event" class="filter-select">
+              <option value="all">All Events</option>
+            </select>
           </div>
         </div>
         <div id="history-list" class="picks-list"></div>
@@ -161,7 +205,6 @@
     <div class="loading-logo">PICK<span>TAPE</span></div>
   </div>
 
-  <!-- Firebase SDKs -->
   <script type="module" src="js/firebase-config.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
