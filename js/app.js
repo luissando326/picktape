@@ -491,11 +491,278 @@ document.querySelectorAll(".tab").forEach(tab => {
     document.querySelectorAll(".tab-section").forEach(s => s.classList.add("hidden"));
     tab.classList.add("active");
     document.getElementById("tab-" + target).classList.remove("hidden");
-    if (target === "pending") renderPending();
-    if (target === "history") renderHistory();
+    if (target === "pending")   renderPending();
+    if (target === "history")   renderHistory();
+    if (target === "dashboard") renderDashboard();
   });
 });
 
 filterResult.addEventListener("change", renderHistory);
 filterType.addEventListener("change",   renderHistory);
 filterEvent.addEventListener("change",  renderHistory);
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+let chartDonut    = null;
+let chartLine     = null;
+let chartRoiType  = null;
+let chartEvents   = null;
+
+const CHART_DEFAULTS = {
+  color: "#e8e4dc",
+  font: { family: "'Barlow', sans-serif", size: 12 },
+};
+
+Chart.defaults.color      = CHART_DEFAULTS.color;
+Chart.defaults.font.family = CHART_DEFAULTS.font.family;
+Chart.defaults.font.size   = CHART_DEFAULTS.font.size;
+
+function renderDashboard() {
+  const settled = picks.filter(p => p.result !== "pending");
+  const dashEmpty = document.getElementById("dash-empty");
+
+  if (picks.length === 0) {
+    dashEmpty.classList.remove("hidden");
+    document.querySelector(".dash-summary").style.display = "none";
+    document.querySelector(".charts-grid").style.display  = "none";
+    return;
+  }
+
+  dashEmpty.classList.add("hidden");
+  document.querySelector(".dash-summary").style.display = "";
+  document.querySelector(".charts-grid").style.display  = "";
+
+  renderSummaryCards();
+  renderDonutChart();
+  renderLineChart();
+  renderRoiByTypeChart();
+  renderEventRecordChart();
+}
+
+function renderSummaryCards() {
+  const won    = picks.filter(p => p.result === "won");
+  const settled = picks.filter(p => p.result !== "pending");
+
+  // Best bet type by hit rate
+  const types = ["Single", "Parlay", "Prop"];
+  let bestType = "—", bestTypeHR = 0, bestTypeSub = "";
+  types.forEach(t => {
+    const s = settled.filter(p => p.type === t);
+    if (!s.length) return;
+    const w = s.filter(p => p.result === "won").length;
+    const hr = Math.round((w / s.length) * 100);
+    if (hr > bestTypeHR) { bestTypeHR = hr; bestType = t; bestTypeSub = `${hr}% hit rate (${s.length} settled)`; }
+  });
+  document.getElementById("dash-best-type").textContent     = bestType;
+  document.getElementById("dash-best-type-sub").textContent = bestTypeSub;
+
+  // Biggest win by odds
+  if (won.length) {
+    const big = won.reduce((a, b) => parseInt(a.odds) > parseInt(b.odds) ? a : b);
+    const bigOdds = formatOdds(big.odds);
+    document.getElementById("dash-biggest-win").textContent     = bigOdds.text;
+    document.getElementById("dash-biggest-win-sub").textContent = big.fighter + (big.event ? ` · ${big.event}` : "");
+  }
+
+  // Current streak
+  const streakPicks = [...picks].filter(p => p.result !== "pending").reverse();
+  let streak = 0, streakType = "";
+  if (streakPicks.length) {
+    streakType = streakPicks[0].result;
+    for (const p of streakPicks) {
+      if (p.result === streakType) streak++;
+      else break;
+    }
+  }
+  const streakEl = document.getElementById("dash-streak");
+  streakEl.textContent = streak ? `${streak} ${streakType === "won" ? "W" : "L"}` : "—";
+  streakEl.className   = "dash-card-val " + (streakType === "won" ? "green" : streakType === "lost" ? "red" : "");
+  document.getElementById("dash-streak-sub").textContent = streak ? `current ${streakType === "won" ? "win" : "loss"} streak` : "";
+
+  // Avg odds on wins
+  if (won.length) {
+    const avgOdds = Math.round(won.reduce((sum, p) => sum + parseInt(p.odds), 0) / won.length);
+    document.getElementById("dash-avg-odds").textContent = (avgOdds > 0 ? "+" : "") + avgOdds;
+  }
+}
+
+function renderDonutChart() {
+  const won     = picks.filter(p => p.result === "won").length;
+  const lost    = picks.filter(p => p.result === "lost").length;
+  const pending = picks.filter(p => p.result === "pending").length;
+  const settled = won + lost;
+  const hitRate = settled ? Math.round((won / settled) * 100) : 0;
+
+  document.getElementById("donut-center-text").innerHTML = `
+    <div class="donut-center-pct">${settled ? hitRate + "%" : "—"}</div>
+    <div class="donut-center-label">Hit Rate</div>
+  `;
+
+  const data = {
+    labels: ["Wins", "Losses", "Pending"],
+    datasets: [{
+      data: [won, lost, pending],
+      backgroundColor: ["rgba(78,203,113,0.85)", "rgba(232,64,64,0.85)", "rgba(42,42,52,0.9)"],
+      borderColor:     ["#4ecb71", "#e84040", "#2a2a34"],
+      borderWidth: 1,
+      hoverOffset: 6,
+    }]
+  };
+
+  if (chartDonut) chartDonut.destroy();
+  chartDonut = new Chart(document.getElementById("chart-donut"), {
+    type: "doughnut",
+    data,
+    options: {
+      cutout: "68%",
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom", labels: { padding: 16, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } }
+      }
+    }
+  });
+}
+
+function renderLineChart() {
+  const settled = picks.filter(p => p.result !== "pending")
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (settled.length < 2) {
+    const canvas = document.getElementById("chart-line");
+    const ctx    = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#44444e";
+    ctx.font      = "13px Barlow";
+    ctx.textAlign = "center";
+    ctx.fillText("Need at least 2 settled picks", canvas.width / 2, 100);
+    return;
+  }
+
+  // Rolling hit rate after each pick
+  const labels  = [];
+  const hitRates = [];
+  settled.forEach((p, i) => {
+    const slice = settled.slice(0, i + 1);
+    const w     = slice.filter(s => s.result === "won").length;
+    hitRates.push(Math.round((w / slice.length) * 100));
+    labels.push(`#${i + 1}`);
+  });
+
+  if (chartLine) chartLine.destroy();
+  chartLine = new Chart(document.getElementById("chart-line"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Hit Rate %",
+        data: hitRates,
+        borderColor: "#e84040",
+        backgroundColor: "rgba(232,64,64,0.08)",
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: "#e84040",
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0, max: 100,
+          ticks: { callback: v => v + "%" },
+          grid: { color: "#1e1e24" },
+        },
+        x: { grid: { color: "#1e1e24" } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` Hit Rate: ${ctx.raw}%` } }
+      }
+    }
+  });
+}
+
+function renderRoiByTypeChart() {
+  const types   = ["Single", "Parlay", "Prop"];
+  const roiVals = types.map(t => {
+    const s = picks.filter(p => p.type === t && p.result !== "pending");
+    if (!s.length) return 0;
+    let profit = 0;
+    s.forEach(p => {
+      const dec = oddsToDecimal(p.odds);
+      profit += p.result === "won" ? (dec - 1) : -1;
+    });
+    return parseFloat(((profit / s.length) * 100).toFixed(1));
+  });
+
+  const colors = roiVals.map(v => v >= 0 ? "rgba(78,203,113,0.8)" : "rgba(232,64,64,0.8)");
+  const borders = roiVals.map(v => v >= 0 ? "#4ecb71" : "#e84040");
+
+  if (chartRoiType) chartRoiType.destroy();
+  chartRoiType = new Chart(document.getElementById("chart-roi-type"), {
+    type: "bar",
+    data: {
+      labels: types,
+      datasets: [{
+        label: "ROI %",
+        data: roiVals,
+        backgroundColor: colors,
+        borderColor: borders,
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: {
+          ticks: { callback: v => v + "%" },
+          grid: { color: "#1e1e24" },
+        },
+        x: { grid: { display: false } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ROI: ${ctx.raw >= 0 ? "+" : ""}${ctx.raw}%` } }
+      }
+    }
+  });
+}
+
+function renderEventRecordChart() {
+  const byEvent = {};
+  picks.filter(p => p.event && p.result !== "pending").forEach(p => {
+    if (!byEvent[p.event]) byEvent[p.event] = { won: 0, lost: 0 };
+    byEvent[p.event][p.result]++;
+  });
+
+  const events  = Object.keys(byEvent).slice(-8); // last 8 events max
+  const wons    = events.map(e => byEvent[e].won);
+  const losses  = events.map(e => byEvent[e].lost);
+
+  // Shorten long event names
+  const shortLabels = events.map(e => e.replace("UFC Fight Night: ", "FN: ").replace("Ultimate Fighting Championship ", "UFC "));
+
+  if (chartEvents) chartEvents.destroy();
+  chartEvents = new Chart(document.getElementById("chart-events"), {
+    type: "bar",
+    data: {
+      labels: shortLabels,
+      datasets: [
+        { label: "Wins",   data: wons,   backgroundColor: "rgba(78,203,113,0.8)", borderColor: "#4ecb71", borderWidth: 1, borderRadius: 4 },
+        { label: "Losses", data: losses, backgroundColor: "rgba(232,64,64,0.8)",  borderColor: "#e84040", borderWidth: 1, borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { ticks: { stepSize: 1 }, grid: { color: "#1e1e24" } },
+        x: { grid: { display: false }, ticks: { maxRotation: 30 } }
+      },
+      plugins: {
+        legend: { position: "bottom", labels: { padding: 14, boxWidth: 12 } },
+      }
+    }
+  });
+}
