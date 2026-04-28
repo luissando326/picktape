@@ -46,12 +46,14 @@ const statHitrate     = document.getElementById("stat-hitrate");
 const statRoi         = document.getElementById("stat-roi");
 const statRecord      = document.getElementById("stat-record");
 const statPending     = document.getElementById("stat-pending");
+const seriesPills     = document.querySelectorAll(".series-pill");
 
 // ── STATE ─────────────────────────────────────────────────────
 let currentUser   = null;
 let picks         = [];
 let ufcEvents     = [];
 let selectedFight = null;
+let activeSeries  = "all"; // "all" | "General" | "Practical Parlay" | "Sped Parlay"
 
 // ── AUTH ──────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
@@ -82,7 +84,23 @@ googleSigninBtn.addEventListener("click", async () => {
 
 signoutBtn.addEventListener("click", () => signOut(auth));
 
-// ── ESPN UFC API ──────────────────────────────────────────────
+// ── SERIES FILTER ─────────────────────────────────────────────
+seriesPills.forEach(pill => {
+  pill.addEventListener("click", () => {
+    activeSeries = pill.dataset.series;
+    seriesPills.forEach(p => p.classList.remove("active"));
+    pill.classList.add("active");
+    renderAll();
+    // Re-render dashboard if it's visible
+    const dashTab = document.getElementById("tab-dashboard");
+    if (dashTab && !dashTab.classList.contains("hidden")) renderDashboard();
+  });
+});
+
+function getFilteredPicks() {
+  if (activeSeries === "all") return picks;
+  return picks.filter(p => (p.series || "General") === activeSeries);
+}
 async function loadUFCEvents() {
   try {
     eventLoading.classList.remove("hidden");
@@ -255,7 +273,7 @@ addPickBtn.addEventListener("click", async () => {
       ? (selectedFight.fighter1 === fighter ? selectedFight.fighter2 : selectedFight.fighter1)
       : "";
 
-    const data = { fighter, odds, event: eventName, type, notes, result: "pending", date: new Date().toISOString(), opponent };
+    const data = { fighter, odds, event: eventName, type, notes, series: document.getElementById("inp-series").value, result: "pending", date: new Date().toISOString(), opponent };
     const id   = await savePick(data);
     picks.unshift({ id, ...data });
     renderAll();
@@ -268,6 +286,7 @@ addPickBtn.addEventListener("click", async () => {
     document.getElementById("manual-fallback").classList.add("hidden");
     document.getElementById("inp-fighter-manual").value = "";
     document.getElementById("inp-event-manual").value   = "";
+    document.getElementById("inp-series").value         = "General";
     inpOdds.value  = "";
     inpNotes.value = "";
     selectedFight  = null;
@@ -311,10 +330,11 @@ function oddsToDecimal(odds) {
 }
 
 function calcStats() {
-  const settled = picks.filter(p => p.result !== "pending");
-  const won     = picks.filter(p => p.result === "won").length;
-  const lost    = picks.filter(p => p.result === "lost").length;
-  const pending = picks.filter(p => p.result === "pending").length;
+  const fp      = getFilteredPicks();
+  const settled = fp.filter(p => p.result !== "pending");
+  const won     = fp.filter(p => p.result === "won").length;
+  const lost    = fp.filter(p => p.result === "lost").length;
+  const pending = fp.filter(p => p.result === "pending").length;
   const hitRate = settled.length ? Math.round((won / settled.length) * 100) : null;
   let roi = null;
   if (settled.length) {
@@ -325,7 +345,7 @@ function calcStats() {
     });
     roi = ((profit / settled.length) * 100).toFixed(1);
   }
-  return { total: picks.length, won, lost, pending, hitRate, roi };
+  return { total: fp.length, won, lost, pending, hitRate, roi };
 }
 
 function updateStats() {
@@ -360,6 +380,9 @@ function buildPickCard(pick, showResultBtns) {
 
   const opponentHTML = pick.opponent ? `<span class="vs-tag">vs ${pick.opponent}</span>` : "";
   const notesHTML    = pick.notes    ? `<div class="pick-notes">"${pick.notes}"</div>`    : "";
+  const series       = pick.series || "General";
+  const seriesClass  = series === "Practical Parlay" ? "series-pp" : series === "Sped Parlay" ? "series-sp" : "series-gen";
+  const seriesHTML   = `<span class="series-badge ${seriesClass}">${series}</span>`;
 
   const actionsHTML = showResultBtns
     ? `<div class="pick-actions">
@@ -382,6 +405,7 @@ function buildPickCard(pick, showResultBtns) {
         <span>·</span>
         <span>${formatDate(pick.date)}</span>
         <span class="pick-type-badge">${pick.type || "Single"}</span>
+        ${seriesHTML}
       </div>
       ${notesHTML}
     </div>
@@ -419,7 +443,8 @@ function renderAll() {
 }
 
 function renderPending() {
-  const pending = picks.filter(p => p.result === "pending");
+  const fp      = getFilteredPicks();
+  const pending = fp.filter(p => p.result === "pending");
   pendingList.innerHTML = "";
   pendingEmpty.classList.toggle("hidden", pending.length > 0);
   pending.forEach(p => pendingList.appendChild(buildPickCard(p, true)));
@@ -430,7 +455,7 @@ function renderHistory() {
   const tf = filterType.value;
   const ef = filterEvent.value;
 
-  const filtered = picks.filter(p =>
+  const filtered = getFilteredPicks().filter(p =>
     (rf === "all" || p.result === rf) &&
     (tf === "all" || p.type   === tf) &&
     (ef === "all" || p.event  === ef)
@@ -472,7 +497,7 @@ function renderHistory() {
 
 function populateEventFilter() {
   const current = filterEvent.value;
-  const events  = [...new Set(picks.map(p => p.event).filter(Boolean))];
+  const events  = [...new Set(getFilteredPicks().map(p => p.event).filter(Boolean))];
   filterEvent.innerHTML = '<option value="all">All Events</option>';
   events.forEach(e => {
     const opt = document.createElement("option");
@@ -517,10 +542,11 @@ Chart.defaults.font.family = CHART_DEFAULTS.font.family;
 Chart.defaults.font.size   = CHART_DEFAULTS.font.size;
 
 function renderDashboard() {
-  const settled = picks.filter(p => p.result !== "pending");
+  const fp      = getFilteredPicks();
+  const settled = fp.filter(p => p.result !== "pending");
   const dashEmpty = document.getElementById("dash-empty");
 
-  if (picks.length === 0) {
+  if (fp.length === 0) {
     dashEmpty.classList.remove("hidden");
     document.querySelector(".dash-summary").style.display = "none";
     document.querySelector(".charts-grid").style.display  = "none";
@@ -531,16 +557,16 @@ function renderDashboard() {
   document.querySelector(".dash-summary").style.display = "";
   document.querySelector(".charts-grid").style.display  = "";
 
-  renderSummaryCards();
-  renderDonutChart();
-  renderLineChart();
-  renderRoiByTypeChart();
-  renderEventRecordChart();
+  renderSummaryCards(fp);
+  renderDonutChart(fp);
+  renderLineChart(fp);
+  renderRoiByTypeChart(fp);
+  renderEventRecordChart(fp);
 }
 
-function renderSummaryCards() {
-  const won    = picks.filter(p => p.result === "won");
-  const settled = picks.filter(p => p.result !== "pending");
+function renderSummaryCards(fp) {
+  const won    = fp.filter(p => p.result === "won");
+  const settled = fp.filter(p => p.result !== "pending");
 
   // Best bet type by hit rate
   const types = ["Single", "Parlay", "Prop"];
@@ -585,10 +611,10 @@ function renderSummaryCards() {
   }
 }
 
-function renderDonutChart() {
-  const won     = picks.filter(p => p.result === "won").length;
-  const lost    = picks.filter(p => p.result === "lost").length;
-  const pending = picks.filter(p => p.result === "pending").length;
+function renderDonutChart(fp) {
+  const won     = fp.filter(p => p.result === "won").length;
+  const lost    = fp.filter(p => p.result === "lost").length;
+  const pending = fp.filter(p => p.result === "pending").length;
   const settled = won + lost;
   const hitRate = settled ? Math.round((won / settled) * 100) : 0;
 
@@ -623,8 +649,8 @@ function renderDonutChart() {
   });
 }
 
-function renderLineChart() {
-  const settled = picks.filter(p => p.result !== "pending")
+function renderLineChart(fp) {
+  const settled = fp.filter(p => p.result !== "pending")
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   if (settled.length < 2) {
@@ -683,10 +709,10 @@ function renderLineChart() {
   });
 }
 
-function renderRoiByTypeChart() {
+function renderRoiByTypeChart(fp) {
   const types   = ["Single", "Parlay", "Prop"];
   const roiVals = types.map(t => {
-    const s = picks.filter(p => p.type === t && p.result !== "pending");
+    const s = fp.filter(p => p.type === t && p.result !== "pending");
     if (!s.length) return 0;
     let profit = 0;
     s.forEach(p => {
@@ -730,9 +756,9 @@ function renderRoiByTypeChart() {
   });
 }
 
-function renderEventRecordChart() {
+function renderEventRecordChart(fp) {
   const byEvent = {};
-  picks.filter(p => p.event && p.result !== "pending").forEach(p => {
+  fp.filter(p => p.event && p.result !== "pending").forEach(p => {
     if (!byEvent[p.event]) byEvent[p.event] = { won: 0, lost: 0 };
     byEvent[p.event][p.result]++;
   });

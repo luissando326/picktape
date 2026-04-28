@@ -69,6 +69,15 @@
       </div>
     </div>
 
+    <!-- SERIES FILTER BAR -->
+    <div class="series-bar">
+      <span class="series-bar-label">Series:</span>
+      <button class="series-pill active" data-series="all">All Picks</button>
+      <button class="series-pill" data-series="General">General</button>
+      <button class="series-pill series-pill--pp" data-series="Practical Parlay">Practical Parlay</button>
+      <button class="series-pill series-pill--sp" data-series="Sped Parlay">Sped Parlay</button>
+    </div>
+
     <!-- TABS -->
     <div class="tabs">
       <button class="tab active" data-tab="log">Log Pick</button>
@@ -142,6 +151,14 @@
                   <option value="Single">Single</option>
                   <option value="Parlay">Parlay</option>
                   <option value="Prop">Prop</option>
+                </select>
+              </div>
+              <div class="field field-sm">
+                <label>Series</label>
+                <select id="inp-series">
+                  <option value="General">General</option>
+                  <option value="Practical Parlay">Practical Parlay</option>
+                  <option value="Sped Parlay">Sped Parlay</option>
                 </select>
               </div>
               <div class="field" style="flex:2;">
