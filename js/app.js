@@ -10,7 +10,7 @@ import {
 
 import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
-  query, orderBy, serverTimestamp
+  query, orderBy, serverTimestamp, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ── DOM REFS ──────────────────────────────────────────────────
@@ -63,6 +63,17 @@ onAuthStateChanged(auth, async (user) => {
     userNameEl.textContent = user.displayName || user.email;
     authScreen.classList.add("hidden");
     appEl.classList.remove("hidden");
+
+    // Save/update public profile doc so others can look them up
+    const handle = (user.email || "").split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    await setDoc(doc(db, "public_profiles", user.uid), {
+      handle,
+      displayName: user.displayName || handle,
+      photoURL:    user.photoURL || "",
+      joinedAt:    user.metadata.creationTime || new Date().toISOString(),
+    }, { merge: true });
+
+    document.getElementById("profile-link").href = `profile.html?user=${handle}`;
     await Promise.all([loadPicks(), loadUFCEvents()]);
   } else {
     currentUser = null;
@@ -154,9 +165,8 @@ function showManualFallback() {
 // ── LEGS STATE ────────────────────────────────────────────────
 let legs = []; // [{ fighter, opponent, odds, movType }]
 
-function isMoV() {
-  return document.getElementById("inp-series").value === "Method of Victory";
-}
+function isMoV()  { return document.getElementById("inp-series").value === "Method of Victory"; }
+function isProp() { return document.getElementById("inp-series").value === "Prop Picks"; }
 
 function updateParlayOdds() {
   const display = document.getElementById("parlay-odds-display");
@@ -279,10 +289,12 @@ fightSelect.addEventListener("change", () => {
   });
 });
 
-// Series change → toggle MoV method field
+// Series change → toggle MoV method field + Prop label field
 document.getElementById("inp-series").addEventListener("change", () => {
-  const movField = document.getElementById("mov-type-field");
-  movField.style.display = isMoV() ? "flex" : "none";
+  const movField  = document.getElementById("mov-type-field");
+  const propField = document.getElementById("prop-label-field");
+  movField.style.display  = isMoV()  ? "flex" : "none";
+  propField.classList.toggle("hidden", !isProp());
   legs = [];
   renderLegs();
 });
@@ -401,10 +413,14 @@ addPickBtn.addEventListener("click", async () => {
   addPickBtn.textContent = "Saving...";
 
   try {
+    const propLabel = series === "Prop Picks"
+      ? (document.getElementById("inp-prop-label")?.value?.trim() || "")
+      : "";
+
     const data = {
       fighter, odds: oddsVal, event: eventName, type, notes,
       series, result: "pending", date: new Date().toISOString(),
-      opponent, legs: [...legs]
+      opponent, legs: [...legs], propLabel
     };
     const id = await savePick(data);
     picks.unshift({ id, ...data });
@@ -416,10 +432,12 @@ addPickBtn.addEventListener("click", async () => {
     fighterSelect.innerHTML = '<option value="">— Select a fighter —</option>';
     fightSection.classList.add("hidden");
     document.getElementById("manual-fallback").classList.add("hidden");
-    document.getElementById("inp-event-manual") && (document.getElementById("inp-event-manual").value = "");
+    document.getElementById("prop-label-field").classList.add("hidden");
+    if (document.getElementById("inp-event-manual")) document.getElementById("inp-event-manual").value = "";
+    if (document.getElementById("inp-prop-label"))   document.getElementById("inp-prop-label").value   = "";
     document.getElementById("inp-leg-odds").value = "";
     document.getElementById("inp-notes").value    = "";
-    document.getElementById("inp-series").value   = "General";
+    document.getElementById("inp-series").value   = "ML Picks";
     document.getElementById("mov-type-field").style.display = "none";
     document.getElementById("parlay-odds-display").style.display = "none";
     legs          = [];
@@ -513,8 +531,9 @@ function buildPickCard(pick, showResultBtns) {
   const card = document.createElement("div");
   card.className = "pick-card " + (showResultBtns ? "pending" : pick.result);
 
-  const opponentHTML = pick.opponent ? `<span class="vs-tag">vs ${pick.opponent}</span>` : "";
-  const notesHTML    = pick.notes    ? `<div class="pick-notes">"${pick.notes}"</div>`    : "";
+  const opponentHTML = pick.opponent   ? `<span class="vs-tag">vs ${pick.opponent}</span>` : "";
+  const notesHTML    = pick.notes      ? `<div class="pick-notes">"${pick.notes}"</div>`    : "";
+  const propHTML     = pick.propLabel  ? `<div class="pick-notes prop-label">📌 ${pick.propLabel}</div>` : "";
   const series       = pick.series || "General";
   const seriesClass  = series === "Practical Parlay" ? "series-pp"
                      : series === "Sped Parlay"       ? "series-sp"
@@ -546,6 +565,7 @@ function buildPickCard(pick, showResultBtns) {
         ${seriesHTML}
       </div>
       ${notesHTML}
+      ${propHTML}
     </div>
     <div class="odds-badge ${odds.positive ? "positive" : ""}">${odds.text}</div>
     ${actionsHTML}
@@ -654,15 +674,107 @@ document.querySelectorAll(".tab").forEach(tab => {
     document.querySelectorAll(".tab-section").forEach(s => s.classList.add("hidden"));
     tab.classList.add("active");
     document.getElementById("tab-" + target).classList.remove("hidden");
-    if (target === "pending")   renderPending();
-    if (target === "history")   renderHistory();
-    if (target === "dashboard") renderDashboard();
+    if (target === "pending")    renderPending();
+    if (target === "history")    renderHistory();
+    if (target === "dashboard")  renderDashboard();
+    if (target === "fightnight") renderFightNight();
   });
 });
 
 filterResult.addEventListener("change", renderHistory);
 filterType.addEventListener("change",   renderHistory);
 filterEvent.addEventListener("change",  renderHistory);
+
+// ── FIGHT NIGHT MODE ──────────────────────────────────────────
+function renderFightNight() {
+  const fnFilter  = document.getElementById("fn-event-filter");
+  const fnList    = document.getElementById("fn-picks-list");
+  const fnEmpty   = document.getElementById("fn-empty");
+  const fnDone    = document.getElementById("fn-done");
+
+  // Populate event dropdown from pending picks
+  const pendingEvents = [...new Set(picks.filter(p => p.result === "pending" && p.event).map(p => p.event))];
+  const current = fnFilter.value;
+  fnFilter.innerHTML = '<option value="">— Select tonight\'s event —</option>';
+  pendingEvents.forEach(e => {
+    const opt = document.createElement("option");
+    opt.value = e; opt.textContent = e;
+    if (e === current) opt.selected = true;
+    fnFilter.appendChild(opt);
+  });
+
+  // Auto-select first event if only one
+  if (pendingEvents.length === 1 && !current) fnFilter.value = pendingEvents[0];
+
+  const selectedEvent = fnFilter.value;
+  fnList.innerHTML = "";
+
+  if (!selectedEvent) {
+    fnEmpty.classList.remove("hidden");
+    fnDone.classList.add("hidden");
+    return;
+  }
+
+  const eventPicks = picks.filter(p => p.event === selectedEvent);
+  const pending    = eventPicks.filter(p => p.result === "pending");
+
+  if (pending.length === 0) {
+    fnEmpty.classList.add("hidden");
+    fnDone.classList.remove("hidden");
+    return;
+  }
+
+  fnEmpty.classList.add("hidden");
+  fnDone.classList.add("hidden");
+
+  pending.forEach(pick => {
+    const odds   = formatOdds(pick.odds);
+    const series = pick.series || "ML Picks";
+    const seriesClass = series === "Practical Parlay" ? "series-pp"
+                      : series === "Sped Parlay"       ? "series-sp"
+                      : series === "Method of Victory" ? "series-mov"
+                      : series === "Prop Picks"        ? "series-prop"
+                      : "series-ml";
+
+    const card = document.createElement("div");
+    card.className = "fn-pick-card";
+
+    const legCount = pick.legs?.length > 1
+      ? `<span class="pick-type-badge">${pick.legs.length}-leg parlay</span>` : "";
+    const propHTML = pick.propLabel
+      ? `<div class="pick-notes prop-label">📌 ${pick.propLabel}</div>` : "";
+
+    card.innerHTML = `
+      <div class="fn-pick-info">
+        <div class="fn-pick-fighter">${pick.fighter}</div>
+        <div class="pick-meta" style="margin-top:4px;">
+          <span class="series-badge ${seriesClass}">${series}</span>
+          ${legCount}
+          <span class="odds-badge ${odds.positive ? "positive" : ""}" style="display:inline-block;">${odds.text}</span>
+        </div>
+        ${propHTML}
+      </div>
+      <div class="fn-buttons">
+        <button class="fn-btn fn-win"  data-action="win"  data-id="${pick.id}">✓ WIN</button>
+        <button class="fn-btn fn-loss" data-action="loss" data-id="${pick.id}">✕ LOSS</button>
+      </div>
+    `;
+
+    card.addEventListener("click", async e => {
+      const btn = e.target.closest("[data-action]");
+      if (!btn) return;
+      btn.closest(".fn-pick-card").style.opacity = "0.4";
+      btn.closest(".fn-pick-card").style.pointerEvents = "none";
+      await setResult(btn.dataset.id, btn.dataset.action === "win" ? "won" : "lost");
+      renderFightNight();
+    });
+
+    fnList.appendChild(card);
+  });
+}
+
+// Re-render fight night when event filter changes
+document.getElementById("fn-event-filter").addEventListener("change", renderFightNight);
 
 // ── DASHBOARD ─────────────────────────────────────────────────
 let chartDonut    = null;

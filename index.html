@@ -42,6 +42,7 @@
           <span id="user-name" class="user-name"></span>
         </div>
         <button id="signout-btn" class="signout-btn">Sign Out</button>
+        <a id="profile-link" href="profile.html" target="_blank" class="profile-btn">My Public Profile ↗</a>
       </div>
     </header>
 
@@ -73,16 +74,18 @@
     <div class="series-bar">
       <span class="series-bar-label">Series:</span>
       <button class="series-pill active" data-series="all">All Picks</button>
-      <button class="series-pill" data-series="General">General</button>
+      <button class="series-pill series-pill--ml" data-series="ML Picks">ML Picks</button>
       <button class="series-pill series-pill--pp" data-series="Practical Parlay">Practical Parlay</button>
       <button class="series-pill series-pill--sp" data-series="Sped Parlay">Sped Parlay</button>
       <button class="series-pill series-pill--mov" data-series="Method of Victory">Method of Victory</button>
+      <button class="series-pill series-pill--prop" data-series="Prop Picks">Prop Picks</button>
     </div>
 
     <!-- TABS -->
     <div class="tabs">
       <button class="tab active" data-tab="log">Log Pick</button>
       <button class="tab" data-tab="pending">Enter Results</button>
+      <button class="tab" data-tab="fightnight">🥊 Fight Night</button>
       <button class="tab" data-tab="history">History</button>
       <button class="tab" data-tab="dashboard">Dashboard</button>
     </div>
@@ -108,11 +111,19 @@
               <div class="field field-sm">
                 <label>Series</label>
                 <select id="inp-series">
-                  <option value="General">General</option>
+                  <option value="ML Picks">ML Picks</option>
                   <option value="Practical Parlay">Practical Parlay</option>
                   <option value="Sped Parlay">Sped Parlay</option>
                   <option value="Method of Victory">Method of Victory</option>
+                  <option value="Prop Picks">Prop Picks</option>
                 </select>
+              </div>
+            </div>
+            <!-- Prop label field — shown only for Prop Picks -->
+            <div id="prop-label-field" class="manual-fallback hidden" style="margin-top:10px;">
+              <div class="field">
+                <label>Prop Description</label>
+                <input type="text" id="inp-prop-label" placeholder="e.g. Poirier wins by KO in Round 1" />
               </div>
             </div>
             <!-- Manual fallback -->
@@ -195,6 +206,28 @@
         <div id="pending-empty" class="empty-state hidden">
           <div class="empty-icon">—</div>
           <div>No pending picks. Log some picks first.</div>
+        </div>
+      </section>
+
+      <!-- FIGHT NIGHT TAB -->
+      <section id="tab-fightnight" class="tab-section hidden">
+        <div class="fn-header">
+          <div>
+            <div class="section-title" style="margin:0;">Fight Night Mode</div>
+            <div class="fn-subtitle">Quick W/L entry for tonight's card</div>
+          </div>
+          <select id="fn-event-filter" class="filter-select">
+            <option value="">— Select tonight's event —</option>
+          </select>
+        </div>
+        <div id="fn-picks-list" class="fn-picks-list"></div>
+        <div id="fn-empty" class="empty-state">
+          <div class="empty-icon">🥊</div>
+          <div>Select an event above to see your pending picks.</div>
+        </div>
+        <div id="fn-done" class="fn-done hidden">
+          <div class="fn-done-icon">✓</div>
+          <div class="fn-done-text">All picks settled for this event!</div>
         </div>
       </section>
 

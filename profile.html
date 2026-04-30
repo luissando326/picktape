@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PICKTAPE — Public Profile</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/profile.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body class="profile-body">
+
+  <!-- SEARCH BAR -->
+  <div class="profile-search-bar">
+    <div class="profile-search-inner">
+      <div class="logo" style="font-size:20px;">PICK<span>TAPE</span></div>
+      <div class="search-wrap">
+        <input type="text" id="search-input" class="search-input" placeholder="Search a user (e.g. luissando326)..." />
+        <button id="search-btn" class="btn-primary" style="white-space:nowrap;">Look Up</button>
+      </div>
+      <a href="index.html" class="signout-btn">← My App</a>
+    </div>
+  </div>
+
+  <!-- PROFILE CARD -->
+  <main class="profile-main">
+
+    <div id="profile-loading" class="empty-state hidden">
+      <div class="empty-icon" style="animation: pulse 1s infinite;">...</div>
+      <div>Loading profile...</div>
+    </div>
+
+    <div id="profile-not-found" class="empty-state hidden">
+      <div class="empty-icon">?</div>
+      <div>No public profile found for that username.</div>
+      <div style="margin-top:8px; font-size:12px; color:var(--text3);">Make sure the user has enabled their public profile.</div>
+    </div>
+
+    <div id="profile-content" class="hidden">
+
+      <!-- Profile Header -->
+      <div class="profile-header-card">
+        <div class="profile-avatar-wrap">
+          <img id="profile-avatar" src="" alt="" class="profile-avatar" />
+        </div>
+        <div class="profile-identity">
+          <div class="profile-name" id="profile-name">—</div>
+          <div class="profile-handle" id="profile-handle">—</div>
+          <div class="profile-joined" id="profile-joined">—</div>
+        </div>
+        <div class="profile-headline-stats">
+          <div class="phs-item">
+            <div class="phs-val" id="ph-total">0</div>
+            <div class="phs-label">Picks</div>
+          </div>
+          <div class="phs-item">
+            <div class="phs-val green" id="ph-hitrate">—</div>
+            <div class="phs-label">Hit Rate</div>
+          </div>
+          <div class="phs-item">
+            <div class="phs-val amber" id="ph-roi">—</div>
+            <div class="phs-label">ROI</div>
+          </div>
+          <div class="phs-item">
+            <div class="phs-val" id="ph-record">0–0</div>
+            <div class="phs-label">Record</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Series Breakdown -->
+      <div class="profile-section-title">By Series</div>
+      <div class="series-breakdown" id="series-breakdown"></div>
+
+      <!-- Recent Picks -->
+      <div class="profile-section-title" style="margin-top:24px;">
+        Recent Picks
+        <span class="profile-section-sub">public picks only</span>
+      </div>
+      <div id="profile-picks-list" class="picks-list"></div>
+
+      <div id="profile-picks-empty" class="empty-state hidden">
+        <div class="empty-icon">—</div>
+        <div>No public picks yet.</div>
+      </div>
+
+    </div>
+
+    <!-- Default state -->
+    <div id="profile-default" class="empty-state">
+      <div class="empty-icon" style="font-size:56px;">🥋</div>
+      <div style="font-size:15px; margin-bottom:6px;">Look up any PICKTAPE user</div>
+      <div style="font-size:12px; color:var(--text3);">Enter a username above to view their public record</div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/profile.js"></script>
+</body>
+</html>
