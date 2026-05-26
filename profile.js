@@ -124,7 +124,7 @@ function renderProfile(profile, picks) {
 const SERIES_CONFIG = {
   "ML Picks":          { cls: "ml",   label: "ML Picks" },
   "Practical Parlay":  { cls: "pp",   label: "Practical Parlay" },
-  "Sped Parlay":       { cls: "sp",   label: "Sped Parlay" },
+  "Long Shot Parlay":       { cls: "sp",   label: "Long Shot Parlay" },
   "Method of Victory": { cls: "mov",  label: "Method of Victory" },
   "Prop Picks":        { cls: "prop", label: "Prop Picks" },
 };

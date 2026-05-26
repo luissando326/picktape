@@ -53,7 +53,7 @@ let currentUser   = null;
 let picks         = [];
 let ufcEvents     = [];
 let selectedFight = null;
-let activeSeries  = "all"; // "all" | "General" | "Practical Parlay" | "Sped Parlay"
+let activeSeries  = "all"; // "all" | "General" | "Practical Parlay" | "Long Shot Parlay"
 
 // ── AUTH ──────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
@@ -121,14 +121,13 @@ async function loadUFCEvents() {
     const data = await res.json();
     const events = data.events || [];
 
-    // Prefer upcoming, fall back to all
+    // Only show upcoming events — not completed ones
     ufcEvents = events.filter(e => e.status?.type?.name !== "STATUS_FINAL");
-    if (ufcEvents.length === 0) ufcEvents = events;
 
     populateEventDropdown();
   } catch (err) {
     console.error("ESPN API error:", err);
-    showManualFallback();
+    eventSelect.innerHTML = '<option value="">⚠ Could not load events. Try again later.</option>';
   } finally {
     eventLoading.classList.add("hidden");
     eventSelect.disabled = false;
@@ -137,7 +136,11 @@ async function loadUFCEvents() {
 
 function populateEventDropdown() {
   eventSelect.innerHTML = '<option value="">— Select an upcoming event —</option>';
-  if (ufcEvents.length === 0) { showManualFallback(); return; }
+
+  if (ufcEvents.length === 0) {
+    eventSelect.innerHTML = '<option value="">No upcoming events right now — check back closer to fight week</option>';
+    return;
+  }
 
   ufcEvents.forEach((event, idx) => {
     const name = event.name || event.shortName || `UFC Event ${idx + 1}`;
@@ -149,12 +152,6 @@ function populateEventDropdown() {
     opt.textContent = `${name}${date ? "  ·  " + date : ""}`;
     eventSelect.appendChild(opt);
   });
-
-  // Always add manual option at bottom
-  const manual = document.createElement("option");
-  manual.value = "manual";
-  manual.textContent = "✏ Enter event manually";
-  eventSelect.appendChild(manual);
 }
 
 function showManualFallback() {
@@ -234,22 +231,13 @@ eventSelect.addEventListener("change", () => {
   renderLegs();
   selectedFight = null;
 
-  const manualFallback = document.getElementById("manual-fallback");
-
-  if (idx === "manual") {
-    manualFallback.classList.remove("hidden");
-    fightSection.classList.remove("hidden");
-    return;
-  }
-
-  manualFallback.classList.add("hidden");
   if (idx === "") return;
 
   const event        = ufcEvents[parseInt(idx)];
   const competitions = event?.competitions || [];
 
   if (competitions.length === 0) {
-    fightSelect.innerHTML = '<option value="">No fights listed yet for this event</option>';
+    fightSelect.innerHTML = '<option value="">Fight card not yet announced for this event</option>';
     fightSection.classList.remove("hidden");
     return;
   }
@@ -301,12 +289,13 @@ document.getElementById("inp-series").addEventListener("change", () => {
 
 // Add Leg button
 document.getElementById("add-leg-btn").addEventListener("click", () => {
-  const fighter  = fighterSelect.value || document.getElementById("inp-event-manual")?.value?.trim();
+  const fighter  = fighterSelect.value;
   const oddsRaw  = document.getElementById("inp-leg-odds").value.trim();
   const odds     = parseInt(oddsRaw);
 
   if (!fighter || isNaN(odds)) {
     document.getElementById("form-error").classList.remove("hidden");
+    document.getElementById("form-error").textContent = "Please select a fighter and enter valid odds.";
     return;
   }
   document.getElementById("form-error").classList.add("hidden");
@@ -364,17 +353,25 @@ addPickBtn.addEventListener("click", async () => {
   // Need at least one leg
   if (legs.length === 0) {
     errorEl.classList.remove("hidden");
+    errorEl.textContent = "Please add at least one leg with valid odds before logging.";
     return;
   }
-  errorEl.classList.add("hidden");
 
-  // Get event name
+  // Get event name from ESPN data only — no manual entry
   const eventIdx = eventSelect.value;
-  let eventName  = document.getElementById("inp-event-manual")?.value?.trim() || "";
-  if (eventIdx !== "" && eventIdx !== "manual" && ufcEvents[parseInt(eventIdx)]) {
+  let eventName  = "";
+  if (eventIdx !== "" && ufcEvents[parseInt(eventIdx)]) {
     const e = ufcEvents[parseInt(eventIdx)];
-    eventName = e.shortName || e.name || eventName;
+    eventName = e.shortName || e.name || "";
   }
+
+  if (!eventName) {
+    errorEl.classList.remove("hidden");
+    errorEl.textContent = "Please select an upcoming event first.";
+    return;
+  }
+
+  errorEl.classList.add("hidden");
 
   // Determine type and combined odds
   const isParlay  = legs.length > 1;
@@ -431,10 +428,8 @@ addPickBtn.addEventListener("click", async () => {
     fightSelect.innerHTML   = '<option value="">— Select a fight —</option>';
     fighterSelect.innerHTML = '<option value="">— Select a fighter —</option>';
     fightSection.classList.add("hidden");
-    document.getElementById("manual-fallback").classList.add("hidden");
     document.getElementById("prop-label-field").classList.add("hidden");
-    if (document.getElementById("inp-event-manual")) document.getElementById("inp-event-manual").value = "";
-    if (document.getElementById("inp-prop-label"))   document.getElementById("inp-prop-label").value   = "";
+    if (document.getElementById("inp-prop-label")) document.getElementById("inp-prop-label").value = "";
     document.getElementById("inp-leg-odds").value = "";
     document.getElementById("inp-notes").value    = "";
     document.getElementById("inp-series").value   = "ML Picks";
@@ -536,7 +531,7 @@ function buildPickCard(pick, showResultBtns) {
   const propHTML     = pick.propLabel  ? `<div class="pick-notes prop-label">📌 ${pick.propLabel}</div>` : "";
   const series       = pick.series || "General";
   const seriesClass  = series === "Practical Parlay" ? "series-pp"
-                     : series === "Sped Parlay"       ? "series-sp"
+                     : series === "Long Shot Parlay"       ? "series-sp"
                      : series === "Method of Victory" ? "series-mov"
                      : "series-gen";
   const seriesHTML   = `<span class="series-badge ${seriesClass}">${series}</span>`;
@@ -731,7 +726,7 @@ function renderFightNight() {
     const odds   = formatOdds(pick.odds);
     const series = pick.series || "ML Picks";
     const seriesClass = series === "Practical Parlay" ? "series-pp"
-                      : series === "Sped Parlay"       ? "series-sp"
+                      : series === "Long Shot Parlay"       ? "series-sp"
                       : series === "Method of Victory" ? "series-mov"
                       : series === "Prop Picks"        ? "series-prop"
                       : "series-ml";

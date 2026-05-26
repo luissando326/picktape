@@ -76,7 +76,7 @@
       <button class="series-pill active" data-series="all">All Picks</button>
       <button class="series-pill series-pill--ml" data-series="ML Picks">ML Picks</button>
       <button class="series-pill series-pill--pp" data-series="Practical Parlay">Practical Parlay</button>
-      <button class="series-pill series-pill--sp" data-series="Sped Parlay">Sped Parlay</button>
+      <button class="series-pill series-pill--sp" data-series="Long Shot Parlay">Long Shot Parlay</button>
       <button class="series-pill series-pill--mov" data-series="Method of Victory">Method of Victory</button>
       <button class="series-pill series-pill--prop" data-series="Prop Picks">Prop Picks</button>
     </div>
@@ -113,7 +113,7 @@
                 <select id="inp-series">
                   <option value="ML Picks">ML Picks</option>
                   <option value="Practical Parlay">Practical Parlay</option>
-                  <option value="Sped Parlay">Sped Parlay</option>
+                  <option value="Long Shot Parlay">Long Shot Parlay</option>
                   <option value="Method of Victory">Method of Victory</option>
                   <option value="Prop Picks">Prop Picks</option>
                 </select>
@@ -126,14 +126,9 @@
                 <input type="text" id="inp-prop-label" placeholder="e.g. Poirier wins by KO in Round 1" />
               </div>
             </div>
-            <!-- Manual fallback -->
-            <div id="manual-fallback" class="manual-fallback hidden">
-              <div class="form-row" style="margin-top:10px;">
-                <div class="field">
-                  <label>Event Name (manual)</label>
-                  <input type="text" id="inp-event-manual" placeholder="e.g. UFC 314" />
-                </div>
-              </div>
+            <!-- Integrity notice -->
+            <div class="integrity-notice">
+              🔒 Picks can only be logged from verified upcoming UFC events. This keeps all records honest.
             </div>
           </div>
 
