@@ -9,8 +9,8 @@ import {
 } from "./firebase-config.js";
 
 import {
-  collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
-  query, orderBy, serverTimestamp, setDoc
+  collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc,
+  query, orderBy, serverTimestamp, setDoc, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ── DOM REFS ──────────────────────────────────────────────────
@@ -59,19 +59,25 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     authScreen.classList.add("hidden");
 
-    // Load their profile from Firestore
-    const { getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-    const profileSnap = await getDoc(doc(db, "public_profiles", user.uid));
+    try {
+      // Load their profile from Firestore
+      const profileSnap = await getDoc(doc(db, "public_profiles", user.uid));
 
-    if (!profileSnap.exists() || !profileSnap.data().username) {
-      // First time — show username setup screen
+      if (!profileSnap.exists() || !profileSnap.data().username) {
+        // First time — show username setup screen
+        loadingEl.classList.add("hidden");
+        usernameScreen.classList.remove("hidden");
+        return;
+      }
+
+      userProfile = profileSnap.data();
+      await launchApp();
+    } catch (err) {
+      console.error("Profile load failed:", err);
+      // Firestore error — still show username screen so user isn't stuck
       loadingEl.classList.add("hidden");
       usernameScreen.classList.remove("hidden");
-      return;
     }
-
-    userProfile = profileSnap.data();
-    await launchApp();
   } else {
     currentUser = null;
     userProfile = null;
@@ -121,8 +127,7 @@ document.getElementById("save-username-btn").addEventListener("click", async () 
   }
 
   // Check if username is taken
-  const { getDocs: gd, query: q, where: w } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-  const taken = await gd(q(collection(db, "public_profiles"), w("username", "==", username)));
+  const taken = await getDocs(query(collection(db, "public_profiles"), where("username", "==", username)));
   if (!taken.empty) {
     errEl.textContent = "That username is already taken. Try another.";
     errEl.classList.remove("hidden"); return;
@@ -183,8 +188,7 @@ document.getElementById("save-profile-btn").addEventListener("click", async () =
 
   // Check if new username is taken by someone else
   if (newUsername !== userProfile.username) {
-    const { getDocs: gd, query: q, where: w } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-    const taken = await gd(q(collection(db, "public_profiles"), w("username", "==", newUsername)));
+    const taken = await getDocs(query(collection(db, "public_profiles"), where("username", "==", newUsername)));
     if (!taken.empty) {
       errEl.textContent = "That username is already taken.";
       errEl.classList.remove("hidden"); return;
