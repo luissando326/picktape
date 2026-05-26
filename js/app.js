@@ -227,10 +227,6 @@ document.getElementById("save-profile-btn").addEventListener("click", async () =
   successEl.classList.remove("hidden");
   setTimeout(() => successEl.classList.add("hidden"), 3000);
 });
-    console.error("Sign in error:", err);
-    alert("Sign in failed. Check your Firebase config and try again.");
-  }
-});
 
 signoutBtn.addEventListener("click", () => signOut(auth));
 
