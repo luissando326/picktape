@@ -9,6 +9,22 @@
 </head>
 <body>
 
+  <!-- USERNAME SETUP SCREEN (first time login) -->
+  <div id="username-screen" class="auth-screen hidden">
+    <div class="auth-card">
+      <div class="auth-logo">PICK<span>TAPE</span></div>
+      <p class="auth-sub">Choose your username</p>
+      <p class="username-info">This is how you'll appear publicly. Your real name is never shown.</p>
+      <div class="field" style="margin-bottom:12px; text-align:left;">
+        <label>Username</label>
+        <input type="text" id="inp-username" placeholder="e.g. sharpshooter_mma" maxlength="24" autocomplete="off" />
+        <div class="username-hint">Letters, numbers, and underscores only. Max 24 characters.</div>
+      </div>
+      <div id="username-error" class="form-error hidden"></div>
+      <button id="save-username-btn" class="btn-primary" style="width:100%; margin-top:8px;">Set Username & Continue</button>
+    </div>
+  </div>
+
   <!-- AUTH SCREEN -->
   <div id="auth-screen" class="auth-screen">
     <div class="auth-card">
@@ -37,14 +53,57 @@
         <div class="header-sub">MMA Prediction Tracker</div>
       </div>
       <div class="header-right">
-        <div class="user-info">
+        <button id="my-profile-btn" class="my-profile-btn">
           <img id="user-avatar" src="" alt="" class="avatar" />
           <span id="user-name" class="user-name"></span>
-        </div>
+        </button>
+        <a id="profile-link" href="profile.html" target="_blank" class="profile-btn">Public Profile ↗</a>
         <button id="signout-btn" class="signout-btn">Sign Out</button>
-        <a id="profile-link" href="profile.html" target="_blank" class="profile-btn">My Public Profile ↗</a>
       </div>
     </header>
+
+    <!-- MY PROFILE MODAL -->
+    <div id="my-profile-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">My Profile</div>
+          <button id="close-profile-modal" class="modal-close">✕</button>
+        </div>
+
+        <!-- Avatar -->
+        <div class="modal-avatar-section">
+          <img id="modal-avatar-preview" src="" alt="" class="modal-avatar" />
+          <div>
+            <div class="modal-avatar-name" id="modal-display-username">—</div>
+            <label class="avatar-upload-btn">
+              Change Photo
+              <input type="file" id="avatar-upload" accept="image/*" style="display:none;" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Fields -->
+        <div class="modal-fields">
+          <div class="field">
+            <label>Username <span class="field-note">(shown publicly)</span></label>
+            <input type="text" id="modal-username" placeholder="your_username" maxlength="24" />
+            <div class="username-hint">Letters, numbers, underscores only. Max 24 chars.</div>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label>Display Name <span class="field-note">(optional, shown on your profile)</span></label>
+            <input type="text" id="modal-displayname" placeholder="e.g. The Sharpshooter" maxlength="32" />
+          </div>
+        </div>
+
+        <div id="modal-error" class="form-error hidden" style="margin-top:12px;"></div>
+        <div id="modal-success" class="success-notice hidden">✓ Profile updated!</div>
+
+        <div class="modal-actions">
+          <button id="save-profile-btn" class="btn-primary">Save Changes</button>
+          <button id="cancel-profile-btn" class="signout-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
 
     <!-- STATS BAR -->
     <div class="stats-bar">

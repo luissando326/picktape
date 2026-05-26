@@ -15,6 +15,7 @@ import {
 
 // ── DOM REFS ──────────────────────────────────────────────────
 const authScreen      = document.getElementById("auth-screen");
+const usernameScreen  = document.getElementById("username-screen");
 const appEl           = document.getElementById("app");
 const loadingEl       = document.getElementById("loading");
 const googleSigninBtn = document.getElementById("google-signin-btn");
@@ -27,11 +28,7 @@ const eventLoading    = document.getElementById("event-loading");
 const fightSelect     = document.getElementById("inp-fight-select");
 const fightSection    = document.getElementById("fight-section");
 const fighterSelect   = document.getElementById("inp-fighter-select");
-const inpOdds         = document.getElementById("inp-odds");
-const inpType         = document.getElementById("inp-type");
-const inpNotes        = document.getElementById("inp-notes");
 const addPickBtn      = document.getElementById("add-pick-btn");
-const formError       = document.getElementById("form-error");
 
 const pendingList     = document.getElementById("pending-list");
 const pendingEmpty    = document.getElementById("pending-empty");
@@ -50,44 +47,182 @@ const seriesPills     = document.querySelectorAll(".series-pill");
 
 // ── STATE ─────────────────────────────────────────────────────
 let currentUser   = null;
+let userProfile   = null; // { username, displayName, photoURL }
 let picks         = [];
 let ufcEvents     = [];
 let selectedFight = null;
-let activeSeries  = "all"; // "all" | "General" | "Practical Parlay" | "Long Shot Parlay"
+let activeSeries  = "all";
 
 // ── AUTH ──────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
-    userAvatar.src = user.photoURL || "";
-    userNameEl.textContent = user.displayName || user.email;
     authScreen.classList.add("hidden");
-    appEl.classList.remove("hidden");
 
-    // Save/update public profile doc so others can look them up
-    const handle = (user.email || "").split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-    await setDoc(doc(db, "public_profiles", user.uid), {
-      handle,
-      displayName: user.displayName || handle,
-      photoURL:    user.photoURL || "",
-      joinedAt:    user.metadata.creationTime || new Date().toISOString(),
-    }, { merge: true });
+    // Load their profile from Firestore
+    const { getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const profileSnap = await getDoc(doc(db, "public_profiles", user.uid));
 
-    document.getElementById("profile-link").href = `profile.html?user=${handle}`;
-    await Promise.all([loadPicks(), loadUFCEvents()]);
+    if (!profileSnap.exists() || !profileSnap.data().username) {
+      // First time — show username setup screen
+      loadingEl.classList.add("hidden");
+      usernameScreen.classList.remove("hidden");
+      return;
+    }
+
+    userProfile = profileSnap.data();
+    await launchApp();
   } else {
     currentUser = null;
+    userProfile = null;
     picks = [];
     authScreen.classList.remove("hidden");
     appEl.classList.add("hidden");
+    usernameScreen.classList.add("hidden");
   }
   loadingEl.classList.add("hidden");
 });
+
+async function launchApp() {
+  // Show username in header (never real name/email)
+  userAvatar.src        = userProfile.photoURL || "";
+  userNameEl.textContent = "@" + (userProfile.username || "user");
+  document.getElementById("profile-link").href = `profile.html?user=${userProfile.username}`;
+  document.getElementById("modal-avatar-preview").src  = userProfile.photoURL || "";
+  document.getElementById("modal-display-username").textContent = "@" + userProfile.username;
+  document.getElementById("modal-username").value    = userProfile.username    || "";
+  document.getElementById("modal-displayname").value = userProfile.displayName || "";
+
+  appEl.classList.remove("hidden");
+  loadingEl.classList.add("hidden");
+  await Promise.all([loadPicks(), loadUFCEvents()]);
+}
 
 googleSigninBtn.addEventListener("click", async () => {
   try {
     await signInWithPopup(auth, provider);
   } catch (err) {
+    console.error("Sign in error:", err);
+    alert("Sign in failed. Check your Firebase config and try again.");
+  }
+});
+
+signoutBtn.addEventListener("click", () => signOut(auth));
+
+// ── USERNAME SETUP ─────────────────────────────────────────────
+document.getElementById("save-username-btn").addEventListener("click", async () => {
+  const raw      = document.getElementById("inp-username").value.trim();
+  const username = raw.toLowerCase().replace(/[^a-z0-9_]/g, "");
+  const errEl    = document.getElementById("username-error");
+
+  if (username.length < 3) {
+    errEl.textContent = "Username must be at least 3 characters.";
+    errEl.classList.remove("hidden"); return;
+  }
+
+  // Check if username is taken
+  const { getDocs: gd, query: q, where: w } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const taken = await gd(q(collection(db, "public_profiles"), w("username", "==", username)));
+  if (!taken.empty) {
+    errEl.textContent = "That username is already taken. Try another.";
+    errEl.classList.remove("hidden"); return;
+  }
+
+  errEl.classList.add("hidden");
+  document.getElementById("save-username-btn").textContent = "Saving...";
+
+  await setDoc(doc(db, "public_profiles", currentUser.uid), {
+    username,
+    displayName: username,
+    photoURL:    currentUser.photoURL || "",
+    joinedAt:    currentUser.metadata.creationTime || new Date().toISOString(),
+  }, { merge: true });
+
+  userProfile = { username, displayName: username, photoURL: currentUser.photoURL || "" };
+  usernameScreen.classList.add("hidden");
+  await launchApp();
+});
+
+// ── MY PROFILE MODAL ──────────────────────────────────────────
+document.getElementById("my-profile-btn").addEventListener("click", () => {
+  document.getElementById("my-profile-modal").classList.remove("hidden");
+});
+document.getElementById("close-profile-modal").addEventListener("click",  closeModal);
+document.getElementById("cancel-profile-btn").addEventListener("click",   closeModal);
+document.getElementById("my-profile-modal").addEventListener("click", e => {
+  if (e.target === document.getElementById("my-profile-modal")) closeModal();
+});
+
+function closeModal() {
+  document.getElementById("my-profile-modal").classList.add("hidden");
+  document.getElementById("modal-error").classList.add("hidden");
+  document.getElementById("modal-success").classList.add("hidden");
+}
+
+// Avatar preview on file select
+document.getElementById("avatar-upload").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById("modal-avatar-preview").src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("save-profile-btn").addEventListener("click", async () => {
+  const newUsername    = document.getElementById("modal-username").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+  const newDisplayName = document.getElementById("modal-displayname").value.trim();
+  const errEl          = document.getElementById("modal-error");
+  const successEl      = document.getElementById("modal-success");
+
+  if (newUsername.length < 3) {
+    errEl.textContent = "Username must be at least 3 characters.";
+    errEl.classList.remove("hidden"); return;
+  }
+
+  // Check if new username is taken by someone else
+  if (newUsername !== userProfile.username) {
+    const { getDocs: gd, query: q, where: w } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const taken = await gd(q(collection(db, "public_profiles"), w("username", "==", newUsername)));
+    if (!taken.empty) {
+      errEl.textContent = "That username is already taken.";
+      errEl.classList.remove("hidden"); return;
+    }
+  }
+
+  errEl.classList.add("hidden");
+
+  // Handle avatar upload if a new file was picked
+  let photoURL = userProfile.photoURL || "";
+  const fileInput = document.getElementById("avatar-upload");
+  if (fileInput.files[0]) {
+    // Convert to base64 data URL — stored directly in Firestore for simplicity
+    photoURL = await new Promise(res => {
+      const r = new FileReader();
+      r.onload = ev => res(ev.target.result);
+      r.readAsDataURL(fileInput.files[0]);
+    });
+  }
+
+  await setDoc(doc(db, "public_profiles", currentUser.uid), {
+    username:    newUsername,
+    displayName: newDisplayName || newUsername,
+    photoURL,
+  }, { merge: true });
+
+  userProfile = { ...userProfile, username: newUsername, displayName: newDisplayName || newUsername, photoURL };
+
+  // Update header
+  userAvatar.src        = photoURL;
+  userNameEl.textContent = "@" + newUsername;
+  document.getElementById("modal-avatar-preview").src         = photoURL;
+  document.getElementById("modal-display-username").textContent = "@" + newUsername;
+  document.getElementById("profile-link").href = `profile.html?user=${newUsername}`;
+
+  successEl.classList.remove("hidden");
+  setTimeout(() => successEl.classList.add("hidden"), 3000);
+});
     console.error("Sign in error:", err);
     alert("Sign in failed. Check your Firebase config and try again.");
   }

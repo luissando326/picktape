@@ -36,7 +36,7 @@ async function doSearch() {
   try {
     // Look up user by handle in the public_profiles collection
     const profilesRef = collection(db, "public_profiles");
-    const q           = query(profilesRef, where("handle", "==", handle));
+    const q           = query(profilesRef, where("username", "==", handle));
     const snap        = await getDocs(q);
 
     if (snap.empty) { showState("not-found"); return; }
@@ -77,8 +77,8 @@ function showState(state) {
 function renderProfile(profile, picks) {
   // Header
   document.getElementById("profile-avatar").src  = profile.photoURL || "";
-  document.getElementById("profile-name").textContent   = profile.displayName || profile.handle;
-  document.getElementById("profile-handle").textContent = "@" + profile.handle;
+  document.getElementById("profile-name").textContent   = profile.displayName || profile.username;
+  document.getElementById("profile-handle").textContent = "@" + profile.username;
   document.getElementById("profile-joined").textContent = profile.joinedAt
     ? "Member since " + new Date(profile.joinedAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : "";
