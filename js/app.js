@@ -13,6 +13,89 @@ import {
   query, orderBy, serverTimestamp, setDoc, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+// ── SECURITY UTILITIES ────────────────────────────────────────
+
+// FIX #1 (CRITICAL): XSS sanitization
+// Escapes all user-generated content before inserting into innerHTML.
+// Prevents <script> injection from Firestore data.
+function esc(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
+// FIX #9 (MEDIUM): Rate limiting for pick submission
+// Prevents spam submissions and Firestore write abuse.
+const rateLimiter = {
+  lastSubmit: 0,
+  cooldownMs: 2000, // 2 seconds between submissions
+  check() {
+    const now = Date.now();
+    if (now - this.lastSubmit < this.cooldownMs) return false;
+    this.lastSubmit = now;
+    return true;
+  }
+};
+
+// FIX #11 (MEDIUM): Whitelist validation for enum fields
+const ALLOWED_SERIES  = ["ML Picks", "Practical Parlay", "Long Shot Parlay", "Method of Victory", "Prop Picks"];
+const ALLOWED_RESULTS = ["pending", "won", "lost"];
+const ALLOWED_TYPES   = ["Single", "Parlay", "KO", "Sub", "DEC", "Prop"];
+const ALLOWED_MOV     = ["KO", "Sub", "DEC"];
+
+function validatePickData(data) {
+  if (!data.fighter || data.fighter.length > 200)   return "Invalid fighter name.";
+  if (!data.event   || data.event.length   > 100)   return "Invalid event name.";
+  if (!ALLOWED_SERIES.includes(data.series))         return "Invalid series.";
+  if (!ALLOWED_TYPES.includes(data.type))            return "Invalid bet type.";
+  if (isNaN(data.odds) || data.odds < -5000 || data.odds > 100000) return "Odds out of range.";
+  if (data.notes     && data.notes.length     > 500) return "Notes too long (max 500 chars).";
+  if (data.propLabel && data.propLabel.length > 300) return "Prop description too long (max 300 chars).";
+  if (data.legs      && data.legs.length      > 12)  return "Too many parlay legs (max 12).";
+  return null; // valid
+}
+
+// FIX #7 (MEDIUM): URL parameter sanitization
+function sanitizeUsername(raw) {
+  return String(raw || "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+}
+
+// FIX #15 (LOW): ESPN API response caching
+// Caches fight card data for 15 minutes to prevent API abuse/throttling.
+const ESPN_CACHE_KEY = "picktape_espn_cache";
+const ESPN_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+function getCachedEvents() {
+  try {
+    const raw = sessionStorage.getItem(ESPN_CACHE_KEY);
+    if (!raw) return null;
+    const { data, timestamp } = JSON.parse(raw);
+    if (Date.now() - timestamp > ESPN_CACHE_TTL) return null;
+    return data;
+  } catch { return null; }
+}
+
+function setCachedEvents(data) {
+  try {
+    sessionStorage.setItem(ESPN_CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+  } catch { /* sessionStorage full or unavailable */ }
+}
+
+// FIX #5 (HIGH): File upload validation
+// Validates avatar file type and size before processing.
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_AVATAR_SIZE_BYTES = 200 * 1024; // 200KB
+
+function validateAvatarFile(file) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return "Only JPG, PNG, WebP, or GIF images are allowed.";
+  if (file.size > MAX_AVATAR_SIZE_BYTES) return "Image must be under 200KB.";
+  return null; // valid
+}
+
 // ── DOM REFS ──────────────────────────────────────────────────
 const authScreen      = document.getElementById("auth-screen");
 const usernameScreen  = document.getElementById("username-screen");
@@ -164,10 +247,20 @@ function closeModal() {
   document.getElementById("modal-success").classList.add("hidden");
 }
 
-// Avatar preview on file select
+// Avatar preview on file select — FIX #5: validate file type and size
 document.getElementById("avatar-upload").addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
+
+  const err = validateAvatarFile(file);
+  if (err) {
+    document.getElementById("modal-error").textContent = err;
+    document.getElementById("modal-error").classList.remove("hidden");
+    e.target.value = ""; // clear the input
+    return;
+  }
+  document.getElementById("modal-error").classList.add("hidden");
+
   const reader = new FileReader();
   reader.onload = ev => {
     document.getElementById("modal-avatar-preview").src = ev.target.result;
@@ -197,11 +290,16 @@ document.getElementById("save-profile-btn").addEventListener("click", async () =
 
   errEl.classList.add("hidden");
 
-  // Handle avatar upload if a new file was picked
+  // FIX #5: Re-validate file before saving (defence in depth)
   let photoURL = userProfile.photoURL || "";
   const fileInput = document.getElementById("avatar-upload");
   if (fileInput.files[0]) {
-    // Convert to base64 data URL — stored directly in Firestore for simplicity
+    const fileErr = validateAvatarFile(fileInput.files[0]);
+    if (fileErr) {
+      errEl.textContent = fileErr;
+      errEl.classList.remove("hidden");
+      return;
+    }
     photoURL = await new Promise(res => {
       const r = new FileReader();
       r.onload = ev => res(ev.target.result);
@@ -252,17 +350,41 @@ async function loadUFCEvents() {
     eventLoading.classList.remove("hidden");
     eventSelect.disabled = true;
 
-    const res  = await fetch("https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard");
-    const data = await res.json();
+    // FIX #15: Check cache before hitting ESPN API
+    const cached = getCachedEvents();
+    if (cached) {
+      ufcEvents = cached;
+      populateEventDropdown();
+      return;
+    }
+
+    // FIX #15: Add fetch timeout to prevent indefinite hang
+    const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
+    const res  = await fetch(
+      "https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard",
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    const data   = await res.json();
     const events = data.events || [];
 
     // Only show upcoming events — not completed ones
     ufcEvents = events.filter(e => e.status?.type?.name !== "STATUS_FINAL");
 
+    // Cache the result
+    setCachedEvents(ufcEvents);
     populateEventDropdown();
   } catch (err) {
-    console.error("ESPN API error:", err);
-    eventSelect.innerHTML = '<option value="">⚠ Could not load events. Try again later.</option>';
+    if (err.name === "AbortError") {
+      console.error("ESPN API timeout");
+      eventSelect.innerHTML = '<option value="">⚠ Event data timed out. Refresh to try again.</option>';
+    } else {
+      console.error("ESPN API error:", err);
+      eventSelect.innerHTML = '<option value="">⚠ Could not load events. Try again later.</option>';
+    }
   } finally {
     eventLoading.classList.add("hidden");
     eventSelect.disabled = false;
@@ -331,15 +453,18 @@ function renderLegs() {
   legs.forEach((leg, i) => {
     const row = document.createElement("div");
     row.className = "leg-item";
-    const movLabel = leg.movType ? ` · <span class="mov-tag">${leg.movType}</span>` : "";
+    // FIX #1: ESPN fighter names escaped defensively
+    const movLabel = leg.movType ? ` · <span class="mov-tag">${esc(leg.movType)}</span>` : "";
     row.innerHTML = `
       <div class="leg-item-info">
         <span class="leg-num">${i + 1}</span>
-        <span class="leg-fighter">${leg.fighter}</span>
-        ${leg.opponent ? `<span class="leg-vs">vs ${leg.opponent}</span>` : ""}
+        <span class="leg-fighter">${esc(leg.fighter)}</span>
+        ${leg.opponent ? `<span class="leg-vs">vs ${esc(leg.opponent)}</span>` : ""}
         ${movLabel}
       </div>
-      <div class="leg-odds ${parseInt(leg.odds) > 0 ? "positive" : ""}">${parseInt(leg.odds) > 0 ? "+" : ""}${leg.odds}</div>
+      <div class="leg-odds ${parseInt(leg.odds) > 0 ? "positive" : ""}">
+        ${parseInt(leg.odds) > 0 ? "+" : ""}${parseInt(leg.odds)}
+      </div>
       <button class="leg-remove" data-idx="${i}">✕</button>
     `;
     list.appendChild(row);
@@ -481,9 +606,16 @@ async function deletePick(id) {
 
 // ── ADD PICK ──────────────────────────────────────────────────
 addPickBtn.addEventListener("click", async () => {
-  const notes    = document.getElementById("inp-notes").value.trim();
+  const notes    = document.getElementById("inp-notes").value.trim().slice(0, 500);
   const series   = document.getElementById("inp-series").value;
   const errorEl  = document.getElementById("form-error");
+
+  // FIX #9: Rate limiting — prevent spam submissions
+  if (!rateLimiter.check()) {
+    errorEl.textContent = "Please wait a moment before submitting again.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
 
   // Need at least one leg
   if (legs.length === 0) {
@@ -546,7 +678,7 @@ addPickBtn.addEventListener("click", async () => {
 
   try {
     const propLabel = series === "Prop Picks"
-      ? (document.getElementById("inp-prop-label")?.value?.trim() || "")
+      ? (document.getElementById("inp-prop-label")?.value?.trim().slice(0, 300) || "")
       : "";
 
     const data = {
@@ -554,6 +686,17 @@ addPickBtn.addEventListener("click", async () => {
       series, result: "pending", date: new Date().toISOString(),
       opponent, legs: [...legs], propLabel
     };
+
+    // FIX #11: Whitelist validate all enum fields before writing to Firestore
+    const validationError = validatePickData(data);
+    if (validationError) {
+      errorEl.textContent = validationError;
+      errorEl.classList.remove("hidden");
+      addPickBtn.disabled    = false;
+      addPickBtn.textContent = "+ Log Pick";
+      return;
+    }
+
     const id = await savePick(data);
     picks.unshift({ id, ...data });
     renderAll();
@@ -661,43 +804,46 @@ function buildPickCard(pick, showResultBtns) {
   const card = document.createElement("div");
   card.className = "pick-card " + (showResultBtns ? "pending" : pick.result);
 
-  const opponentHTML = pick.opponent   ? `<span class="vs-tag">vs ${pick.opponent}</span>` : "";
-  const notesHTML    = pick.notes      ? `<div class="pick-notes">"${pick.notes}"</div>`    : "";
-  const propHTML     = pick.propLabel  ? `<div class="pick-notes prop-label">📌 ${pick.propLabel}</div>` : "";
-  const series       = pick.series || "General";
+  // FIX #1 (CRITICAL): All user-generated Firestore data escaped before innerHTML insertion
+  const opponentHTML = pick.opponent   ? `<span class="vs-tag">vs ${esc(pick.opponent)}</span>` : "";
+  const notesHTML    = pick.notes      ? `<div class="pick-notes">"${esc(pick.notes)}"</div>`    : "";
+  const propHTML     = pick.propLabel  ? `<div class="pick-notes prop-label">📌 ${esc(pick.propLabel)}</div>` : "";
+  const series       = pick.series || "ML Picks";
   const seriesClass  = series === "Practical Parlay" ? "series-pp"
-                     : series === "Long Shot Parlay"       ? "series-sp"
+                     : series === "Long Shot Parlay"  ? "series-sp"
                      : series === "Method of Victory" ? "series-mov"
-                     : "series-gen";
-  const seriesHTML   = `<span class="series-badge ${seriesClass}">${series}</span>`;
+                     : series === "Prop Picks"        ? "series-prop"
+                     : "series-ml";
+  const seriesHTML   = `<span class="series-badge ${seriesClass}">${esc(series)}</span>`;
 
+  // pick.id comes from Firestore doc ID — alphanumeric only, safe for data attributes
   const actionsHTML = showResultBtns
     ? `<div class="pick-actions">
-        <button class="btn-sm win"  data-action="win"  data-id="${pick.id}">WIN</button>
-        <button class="btn-sm loss" data-action="loss" data-id="${pick.id}">LOSS</button>
-        <button class="btn-sm del"  data-action="del"  data-id="${pick.id}">✕</button>
+        <button class="btn-sm win"  data-action="win"  data-id="${esc(pick.id)}">WIN</button>
+        <button class="btn-sm loss" data-action="loss" data-id="${esc(pick.id)}">LOSS</button>
+        <button class="btn-sm del"  data-action="del"  data-id="${esc(pick.id)}">✕</button>
        </div>`
     : `<div class="pick-actions">
         <div class="status-badge ${pick.result}">
           ${pick.result === "won" ? "WIN" : pick.result === "lost" ? "LOSS" : "PENDING"}
         </div>
-        <button class="btn-sm del" data-action="del" data-id="${pick.id}">✕</button>
+        <button class="btn-sm del" data-action="del" data-id="${esc(pick.id)}">✕</button>
        </div>`;
 
   card.innerHTML = `
     <div class="pick-info">
-      <div class="pick-fighter">${pick.fighter} ${opponentHTML}</div>
+      <div class="pick-fighter">${esc(pick.fighter)} ${opponentHTML}</div>
       <div class="pick-meta">
-        <span>${pick.event || "Event TBD"}</span>
+        <span>${esc(pick.event || "Event TBD")}</span>
         <span>·</span>
-        <span>${formatDate(pick.date)}</span>
-        <span class="pick-type-badge">${pick.type || "Single"}</span>
+        <span>${esc(formatDate(pick.date))}</span>
+        <span class="pick-type-badge">${esc(pick.type || "Single")}</span>
         ${seriesHTML}
       </div>
       ${notesHTML}
       ${propHTML}
     </div>
-    <div class="odds-badge ${odds.positive ? "positive" : ""}">${odds.text}</div>
+    <div class="odds-badge ${odds.positive ? "positive" : ""}">${esc(odds.text)}</div>
     ${actionsHTML}
   `;
 
@@ -766,12 +912,13 @@ function renderHistory() {
 
     const header = document.createElement("div");
     header.className = "event-group-header";
+    // FIX #1: eventName comes from Firestore — escape it
     header.innerHTML = `
-      <span class="event-group-name">${eventName}</span>
+      <span class="event-group-name">${esc(eventName)}</span>
       <span class="event-group-record">
-        ${won     > 0 ? `<span class="rec-w">${won}W</span>`         : ""}
-        ${lost    > 0 ? `<span class="rec-l">${lost}L</span>`        : ""}
-        ${pending > 0 ? `<span class="rec-p">${pending} pending</span>` : ""}
+        ${won     > 0 ? `<span class="rec-w">${won}W</span>`             : ""}
+        ${lost    > 0 ? `<span class="rec-l">${lost}L</span>`            : ""}
+        ${pending > 0 ? `<span class="rec-p">${pending} pending</span>`  : ""}
       </span>
     `;
     historyList.appendChild(header);
@@ -869,24 +1016,25 @@ function renderFightNight() {
     const card = document.createElement("div");
     card.className = "fn-pick-card";
 
+    // FIX #1: All pick data escaped before innerHTML insertion
     const legCount = pick.legs?.length > 1
-      ? `<span class="pick-type-badge">${pick.legs.length}-leg parlay</span>` : "";
+      ? `<span class="pick-type-badge">${parseInt(pick.legs.length)}-leg parlay</span>` : "";
     const propHTML = pick.propLabel
-      ? `<div class="pick-notes prop-label">📌 ${pick.propLabel}</div>` : "";
+      ? `<div class="pick-notes prop-label">📌 ${esc(pick.propLabel)}</div>` : "";
 
     card.innerHTML = `
       <div class="fn-pick-info">
-        <div class="fn-pick-fighter">${pick.fighter}</div>
+        <div class="fn-pick-fighter">${esc(pick.fighter)}</div>
         <div class="pick-meta" style="margin-top:4px;">
-          <span class="series-badge ${seriesClass}">${series}</span>
+          <span class="series-badge ${seriesClass}">${esc(series)}</span>
           ${legCount}
-          <span class="odds-badge ${odds.positive ? "positive" : ""}" style="display:inline-block;">${odds.text}</span>
+          <span class="odds-badge ${odds.positive ? "positive" : ""}" style="display:inline-block;">${esc(odds.text)}</span>
         </div>
         ${propHTML}
       </div>
       <div class="fn-buttons">
-        <button class="fn-btn fn-win"  data-action="win"  data-id="${pick.id}">✓ WIN</button>
-        <button class="fn-btn fn-loss" data-action="loss" data-id="${pick.id}">✕ LOSS</button>
+        <button class="fn-btn fn-win"  data-action="win"  data-id="${esc(pick.id)}">✓ WIN</button>
+        <button class="fn-btn fn-loss" data-action="loss" data-id="${esc(pick.id)}">✕ LOSS</button>
       </div>
     `;
 

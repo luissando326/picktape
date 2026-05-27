@@ -1,11 +1,28 @@
 // ============================================================
-// PICKTAPE — Public Profile Page
+// PICKTAPE — Public Profile Page (Security Hardened)
 // ============================================================
 
 import { db } from "./firebase-config.js";
 import {
   collection, getDocs, query, where, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── SECURITY: XSS escape utility ─────────────────────────────
+// FIX #1: All Firestore data escaped before innerHTML insertion
+function esc(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
+// FIX #7: Sanitize URL parameters — only allow valid username chars
+function sanitizeUsername(raw) {
+  return String(raw || "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+}
 
 // ── DOM ───────────────────────────────────────────────────────
 const searchInput    = document.getElementById("search-input");
@@ -19,17 +36,18 @@ const profileNotFound= document.getElementById("profile-not-found");
 searchBtn.addEventListener("click", doSearch);
 searchInput.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
 
-// Check URL param on load (e.g. profile.html?user=luissando326)
+// Check URL param on load — FIX #7: sanitize before use
 const urlParams = new URLSearchParams(window.location.search);
-const urlUser   = urlParams.get("user");
+const urlUser   = sanitizeUsername(urlParams.get("user") || "");
 if (urlUser) {
   searchInput.value = urlUser;
   doSearch();
 }
 
 async function doSearch() {
-  const handle = searchInput.value.trim().toLowerCase();
-  if (!handle) return;
+  // FIX #7: Sanitize search input before querying Firestore
+  const handle = sanitizeUsername(searchInput.value);
+  if (handle.length < 3) return;
 
   showState("loading");
 
@@ -75,8 +93,8 @@ function showState(state) {
 
 // ── RENDER PROFILE ────────────────────────────────────────────
 function renderProfile(profile, picks) {
-  // Header
-  document.getElementById("profile-avatar").src  = profile.photoURL || "";
+  // FIX #1: Use textContent for user data — never innerHTML for untrusted strings
+  document.getElementById("profile-avatar").src  = esc(profile.photoURL || "");
   document.getElementById("profile-name").textContent   = profile.displayName || profile.username;
   document.getElementById("profile-handle").textContent = "@" + profile.username;
   document.getElementById("profile-joined").textContent = profile.joinedAt
@@ -140,13 +158,17 @@ function renderSeriesBreakdown(picks) {
     const won     = sp.filter(p => p.result === "won").length;
     const hr      = settled.length ? Math.round((won / settled.length) * 100) : null;
 
+    // FIX #1: config.label comes from local SERIES_CONFIG constant — safe
+    // won/hr are computed numbers — safe. No user data in this card.
     const card = document.createElement("div");
     card.className = `sb-card ${config.cls}`;
     card.innerHTML = `
       <div class="sb-series">${config.label}</div>
       <div class="sb-stats">
         <div>
-          <div class="sb-stat-val ${hr !== null ? (hr >= 50 ? "green" : "red") : ""}">${hr !== null ? hr + "%" : "—"}</div>
+          <div class="sb-stat-val ${hr !== null ? (hr >= 50 ? "green" : "red") : ""}">
+            ${hr !== null ? hr + "%" : "—"}
+          </div>
           <div class="sb-stat-label">Hit Rate</div>
         </div>
         <div>
@@ -179,22 +201,25 @@ function renderPicksList(picks) {
     const card    = document.createElement("div");
     card.className = `pick-card ${pick.result}`;
 
-    const propHTML = pick.propLabel ? `<div class="pick-notes">"${pick.propLabel}"</div>` : "";
-    const legCount = pick.legs?.length > 1 ? `<span class="pick-type-badge">${pick.legs.length}-leg parlay</span>` : "";
+    // FIX #1: All pick data escaped before innerHTML insertion
+    const propHTML = pick.propLabel
+      ? `<div class="pick-notes">"${esc(pick.propLabel)}"</div>` : "";
+    const legCount = pick.legs?.length > 1
+      ? `<span class="pick-type-badge">${parseInt(pick.legs.length)}-leg parlay</span>` : "";
 
     card.innerHTML = `
       <div class="pick-info">
-        <div class="pick-fighter">${pick.fighter}</div>
+        <div class="pick-fighter">${esc(pick.fighter)}</div>
         <div class="pick-meta">
-          <span>${pick.event || "Event TBD"}</span>
+          <span>${esc(pick.event || "Event TBD")}</span>
           <span>·</span>
-          <span>${formatDate(pick.date)}</span>
-          <span class="series-badge series-${cfg.cls}">${series}</span>
+          <span>${esc(formatDate(pick.date))}</span>
+          <span class="series-badge series-${esc(cfg.cls)}">${esc(series)}</span>
           ${legCount}
         </div>
         ${propHTML}
       </div>
-      <div class="odds-badge ${odds.positive ? "positive" : ""}">${odds.text}</div>
+      <div class="odds-badge ${odds.positive ? "positive" : ""}">${esc(odds.text)}</div>
       <div class="status-badge ${pick.result}">
         ${pick.result === "won" ? "WIN" : pick.result === "lost" ? "LOSS" : "PENDING"}
       </div>
