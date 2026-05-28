@@ -110,7 +110,94 @@
   text-transform: uppercase; margin-top: 2px;
 }
 
-/* ── PROFILE PICK CARD ───────────────────── */
+/* ── DIRECTORY ───────────────────────────── */
+.dir-header { margin-bottom: 20px; }
+.dir-subtitle { font-size: 12px; color: var(--text3); margin-top: 4px; letter-spacing: 0.06em; }
+
+.directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.dir-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+  transition: border-color 0.15s;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.dir-card:hover { border-color: var(--border2); }
+
+.dir-card-top { display: flex; align-items: center; gap: 12px; }
+.dir-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  object-fit: cover; border: 1px solid var(--border2);
+  background: var(--bg3); flex-shrink: 0;
+}
+.dir-identity { flex: 1; min-width: 0; }
+.dir-username {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 17px;
+  letter-spacing: 0.02em; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dir-displayname { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.dir-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 4px; background: var(--bg3);
+  border-radius: var(--radius); padding: 10px 8px;
+}
+.dir-stat { text-align: center; }
+.dir-stat-val {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 18px; line-height: 1;
+  color: var(--text);
+}
+.dir-stat-val.green { color: var(--green); }
+.dir-stat-val.amber { color: var(--amber); }
+.dir-stat-val.red   { color: var(--red); }
+.dir-stat-label {
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text3); margin-top: 3px;
+}
+
+.dir-view-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px; letter-spacing: 0.1em;
+  text-transform: uppercase; width: 100%;
+  background: transparent; border: 1px solid var(--border2);
+  color: var(--text2); border-radius: var(--radius);
+  padding: 8px; cursor: pointer; transition: all 0.15s;
+}
+.dir-view-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── BACK BUTTON ─────────────────────────── */
+.back-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 12px; letter-spacing: 0.1em;
+  text-transform: uppercase; background: transparent;
+  border: 1px solid var(--border2); color: var(--text3);
+  border-radius: var(--radius); padding: 6px 14px;
+  cursor: pointer; transition: all 0.15s; margin-bottom: 20px;
+  display: inline-block;
+}
+.back-btn:hover { color: var(--text); border-color: var(--text2); }
+
+/* ── PROFILE TABS ────────────────────────── */
+.profile-tabs {
+  display: flex; gap: 0; margin: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-tab {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; font-size: 13px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 10px 18px;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--text3); cursor: pointer; transition: all 0.15s;
+}
+.profile-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.profile-tab:hover:not(.active) { color: var(--text2); }
 .profile-btn {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
