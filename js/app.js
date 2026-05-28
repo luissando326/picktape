@@ -816,7 +816,8 @@ function buildPickCard(pick, showResultBtns) {
                      : "series-ml";
   const seriesHTML   = `<span class="series-badge ${seriesClass}">${esc(series)}</span>`;
 
-  // pick.id comes from Firestore doc ID — alphanumeric only, safe for data attributes
+  // Integrity lock — delete only allowed on pending picks
+  // Settled picks (won/lost) are permanent to protect record integrity
   const actionsHTML = showResultBtns
     ? `<div class="pick-actions">
         <button class="btn-sm win"  data-action="win"  data-id="${esc(pick.id)}">WIN</button>
@@ -827,7 +828,10 @@ function buildPickCard(pick, showResultBtns) {
         <div class="status-badge ${pick.result}">
           ${pick.result === "won" ? "WIN" : pick.result === "lost" ? "LOSS" : "PENDING"}
         </div>
-        <button class="btn-sm del" data-action="del" data-id="${esc(pick.id)}">✕</button>
+        ${pick.result === "pending"
+          ? `<button class="btn-sm del" data-action="del" data-id="${esc(pick.id)}">✕</button>`
+          : `<span class="pick-locked" title="Settled picks cannot be deleted">🔒</span>`
+        }
        </div>`;
 
   card.innerHTML = `

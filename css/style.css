@@ -483,6 +483,12 @@ html, body {
   border-radius: var(--radius); letter-spacing: 0.02em;
 }
 
+.pick-locked {
+  font-size: 13px; opacity: 0.3;
+  cursor: default; padding: 4px;
+  title: "Settled picks cannot be deleted";
+}
+
 /* ── PROP LABEL ──────────────────────────── */
 .prop-label { color: #38bdf8 !important; font-style: normal !important; }
 .series-prop { background: rgba(56,189,248,0.12); color: #38bdf8; }
