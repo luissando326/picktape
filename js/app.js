@@ -183,6 +183,22 @@ async function launchApp() {
   document.getElementById("modal-displayname").value = userProfile.displayName || "";
 
   appEl.classList.remove("hidden");
+
+  // ── ONBOARDING BANNER ─────────────────────────────────────
+  // Show once per user — stored in localStorage keyed to their username
+  const obKey = `picktape_onboarded_${userProfile.username}`;
+  if (!localStorage.getItem(obKey)) {
+    const banner = document.getElementById("onboarding-banner");
+    banner.classList.remove("hidden");
+    // Animate in after a short delay
+    setTimeout(() => banner.classList.add("visible"), 100);
+
+    document.getElementById("onboarding-dismiss").addEventListener("click", () => {
+      banner.classList.remove("visible");
+      setTimeout(() => banner.classList.add("hidden"), 400);
+      localStorage.setItem(obKey, "1");
+    });
+  }
   loadingEl.classList.add("hidden");
   await Promise.all([loadPicks(), loadUFCEvents()]);
 }

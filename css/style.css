@@ -448,6 +448,80 @@ html, body {
 }
 .community-btn:hover { background: var(--accent); color: #fff; }
 
+/* ── ONBOARDING BANNER ───────────────────── */
+.onboarding-banner {
+  background: linear-gradient(135deg, #0f0f14 0%, #141420 100%);
+  border-bottom: 1px solid rgba(232,64,64,0.25);
+  padding: 0 28px;
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.4s ease;
+  opacity: 0;
+}
+.onboarding-banner.visible {
+  max-height: 400px;
+  padding: 20px 28px;
+  opacity: 1;
+}
+.onboarding-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: flex; align-items: flex-start; gap: 20px;
+}
+.onboarding-logo {
+  font-size: 28px; flex-shrink: 0;
+  padding-top: 2px;
+}
+.onboarding-steps { flex: 1; }
+.onboarding-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 14px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+.onboarding-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.onboarding-step {
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.ob-step-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 13px;
+  background: var(--accent); color: #fff;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.ob-step-content {}
+.ob-step-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text); margin-bottom: 4px;
+}
+.ob-step-desc {
+  font-size: 12px; color: var(--text2);
+  line-height: 1.5;
+}
+.ob-step-desc strong { color: var(--text); }
+.onboarding-dismiss {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius);
+  padding: 8px 16px; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  transition: background 0.15s; align-self: center;
+}
+.onboarding-dismiss:hover { background: var(--accent2); }
+
+@media (max-width: 700px) {
+  .onboarding-grid { grid-template-columns: 1fr; }
+  .onboarding-inner { flex-direction: column; gap: 14px; }
+  .onboarding-logo { display: none; }
+}
+
 /* ── MY PROFILE BUTTON ───────────────────── */
 .my-profile-btn {
   display: flex; align-items: center; gap: 8px;
