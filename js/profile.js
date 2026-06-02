@@ -49,6 +49,28 @@ searchBtn.addEventListener("click", doSearch);
 searchInput.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
 backBtn.addEventListener("click", showDirectory);
 
+// My Profile button — set from URL param if user is logged in
+const myProfileBtn = document.getElementById("my-profile-dir-btn");
+const storedHandle = new URLSearchParams(window.location.search).get("me");
+if (storedHandle) {
+  myProfileBtn.classList.remove("hidden");
+  myProfileBtn.textContent = "@" + sanitizeUsername(storedHandle);
+  myProfileBtn.addEventListener("click", () => {
+    searchInput.value = sanitizeUsername(storedHandle);
+    doSearch();
+  });
+}
+
+// Pass username from main app via URL param ?me=username
+const meParam = new URLSearchParams(window.location.search).get("me");
+if (meParam) {
+  myProfileBtn.classList.remove("hidden");
+  myProfileBtn.addEventListener("click", () => {
+    searchInput.value = sanitizeUsername(meParam);
+    doSearch();
+  });
+}
+
 // Check URL param on load
 const urlParams = new URLSearchParams(window.location.search);
 const urlUser   = sanitizeUsername(urlParams.get("user") || "");
@@ -89,6 +111,16 @@ async function loadDirectory() {
       const hrB = calcHitRate(b.picks);
       return (hrB ?? -1) - (hrA ?? -1);
     });
+
+    // Update hero stats
+    const totalPicks   = usersWithStats.reduce((sum, u) => sum + u.picks.length, 0);
+    const allSettled   = usersWithStats.flatMap(u => u.picks.filter(p => p.result !== "pending"));
+    const allWon       = allSettled.filter(p => p.result === "won").length;
+    const communityHR  = allSettled.length ? Math.round((allWon / allSettled.length) * 100) : null;
+
+    document.getElementById("dir-total-users").textContent   = usersWithStats.length;
+    document.getElementById("dir-total-picks").textContent   = totalPicks;
+    document.getElementById("dir-avg-hitrate").textContent   = communityHR !== null ? communityHR + "%" : "—";
 
     renderDirectory(usersWithStats);
     showDirectoryState("grid");

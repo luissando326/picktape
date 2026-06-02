@@ -176,7 +176,7 @@ async function launchApp() {
   // Show username in header (never real name/email)
   userAvatar.src        = userProfile.photoURL || "";
   userNameEl.textContent = "@" + (userProfile.username || "user");
-  document.getElementById("profile-link").href = `profile.html?user=${userProfile.username}`;
+  document.getElementById("profile-link").href = `profile.html?me=${userProfile.username}`;
   document.getElementById("modal-avatar-preview").src  = userProfile.photoURL || "";
   document.getElementById("modal-display-username").textContent = "@" + userProfile.username;
   document.getElementById("modal-username").value    = userProfile.username    || "";
@@ -320,7 +320,7 @@ document.getElementById("save-profile-btn").addEventListener("click", async () =
   userNameEl.textContent = "@" + newUsername;
   document.getElementById("modal-avatar-preview").src         = photoURL;
   document.getElementById("modal-display-username").textContent = "@" + newUsername;
-  document.getElementById("profile-link").href = `profile.html?user=${newUsername}`;
+  document.getElementById("profile-link").href = `profile.html?me=${newUsername}`;
 
   successEl.classList.remove("hidden");
   setTimeout(() => successEl.classList.add("hidden"), 3000);

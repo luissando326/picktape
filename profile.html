@@ -18,7 +18,10 @@
         <input type="text" id="search-input" class="search-input" placeholder="Search by username..." />
         <button id="search-btn" class="btn-primary">Search</button>
       </div>
-      <a href="index.html" class="signout-btn">← My App</a>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="my-profile-dir-btn" class="my-profile-dir-btn hidden">My Profile</button>
+        <a href="index.html" class="signout-btn">← My App</a>
+      </div>
     </div>
   </div>
 
@@ -26,9 +29,26 @@
 
     <!-- DIRECTORY VIEW (default) -->
     <div id="directory-view">
-      <div class="dir-header">
-        <div class="profile-section-title" style="margin:0;">PICKTAPE Community</div>
-        <div class="dir-subtitle">All registered users</div>
+      <div class="dir-hero">
+        <div class="dir-hero-left">
+          <div class="dir-hero-label">PICKTAPE</div>
+          <div class="dir-hero-title">Community</div>
+          <div class="dir-hero-sub">Track records. Compare picks. Find the sharpest minds in MMA.</div>
+        </div>
+        <div class="dir-hero-right" id="dir-live-stats">
+          <div class="dir-hero-stat">
+            <div class="dir-hero-stat-val" id="dir-total-users">—</div>
+            <div class="dir-hero-stat-label">Members</div>
+          </div>
+          <div class="dir-hero-stat">
+            <div class="dir-hero-stat-val" id="dir-total-picks">—</div>
+            <div class="dir-hero-stat-label">Total Picks</div>
+          </div>
+          <div class="dir-hero-stat">
+            <div class="dir-hero-stat-val green" id="dir-avg-hitrate">—</div>
+            <div class="dir-hero-stat-label">Avg Hit Rate</div>
+          </div>
+        </div>
       </div>
       <div id="directory-loading" class="empty-state">
         <div class="empty-icon" style="animation:pulse 1s infinite;">...</div>
