@@ -3,429 +3,703 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PICKTAPE — MMA Fight Pick Tracker</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
+  <title>PICKTAPE — Know Your Real Record</title>
+  <meta name="description" content="Stop guessing. Start tracking. PICKTAPE locks your MMA picks to real upcoming events so your record is always honest." />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080809;
+      --bg2:     #0e0e11;
+      --bg3:     #141418;
+      --border:  #1e1e26;
+      --border2: #2a2a36;
+      --text:    #edeae0;
+      --text2:   #888894;
+      --text3:   #44444e;
+      --red:     #e83232;
+      --red2:    #c82222;
+      --green:   #4ecb71;
+      --amber:   #f0a840;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ──────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(8,8,9,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .nav-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 24px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      text-decoration: none; color: var(--text);
+    }
+    .nav-logo span { color: var(--red); }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-link {
+      font-size: 13px; color: var(--text2); text-decoration: none;
+      letter-spacing: 0.06em; transition: color 0.15s;
+    }
+    .nav-link:hover { color: var(--text); }
+    .nav-cta {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 13px; letter-spacing: 0.1em;
+      text-transform: uppercase; background: var(--red);
+      color: #fff; border: none; border-radius: 6px;
+      padding: 9px 20px; cursor: pointer; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .nav-cta:hover { background: var(--red2); }
+
+    /* ── HERO ─────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Background grid */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(232,50,50,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232,50,50,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+    }
+
+    /* Red glow */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 20%; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(232,50,50,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 20px;
+      opacity: 0; animation: fadeUp 0.6s 0.2s ease forwards;
+    }
+
+    .hero-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-style: italic;
+      font-size: clamp(64px, 10vw, 120px);
+      line-height: 0.92; text-transform: uppercase;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+      opacity: 0; animation: fadeUp 0.6s 0.35s ease forwards;
+    }
+    .hero-title-line2 {
+      color: var(--red);
+      display: block;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(16px, 2.5vw, 22px);
+      color: var(--text2); font-weight: 300;
+      max-width: 560px; margin: 24px auto 0;
+      line-height: 1.5;
+      opacity: 0; animation: fadeUp 0.6s 0.5s ease forwards;
+    }
+
+    .hero-cta-group {
+      display: flex; gap: 12px; align-items: center;
+      justify-content: center; margin-top: 40px;
+      opacity: 0; animation: fadeUp 0.6s 0.65s ease forwards;
+      flex-wrap: wrap;
+    }
+
+    .btn-hero {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 15px; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 14px 36px;
+      border-radius: 6px; cursor: pointer; text-decoration: none;
+      transition: all 0.15s; display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-hero-primary {
+      background: var(--red); color: #fff; border: none;
+    }
+    .btn-hero-primary:hover { background: var(--red2); transform: translateY(-1px); }
+    .btn-hero-secondary {
+      background: transparent; color: var(--text2);
+      border: 1px solid var(--border2);
+    }
+    .btn-hero-secondary:hover { border-color: var(--text2); color: var(--text); }
+
+    .hero-proof {
+      margin-top: 48px;
+      display: flex; align-items: center; gap: 24px;
+      justify-content: center; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.6s 0.8s ease forwards;
+    }
+    .hero-proof-item {
+      font-size: 12px; color: var(--text3);
+      letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;
+    }
+    .hero-proof-item::before { content: '✓'; color: var(--green); font-weight: 700; }
+
+    /* ── TRUTH SECTION ────────────────── */
+    .truth-section {
+      padding: 100px 48px;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .truth-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+      align-items: center;
+    }
+    .truth-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--red); margin-bottom: 16px;
+    }
+    .truth-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: clamp(36px, 5vw, 56px);
+      line-height: 1.0; text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .truth-body {
+      font-size: 16px; color: var(--text2); line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .truth-stat-row {
+      display: flex; gap: 32px; margin-top: 32px;
+    }
+    .truth-stat {}
+    .truth-stat-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 48px; line-height: 1;
+      color: var(--red);
+    }
+    .truth-stat-label {
+      font-size: 12px; color: var(--text3); letter-spacing: 0.08em;
+      text-transform: uppercase; margin-top: 4px;
+    }
+
+    /* Fake pick card demo */
+    .demo-card-stack { position: relative; }
+    .demo-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px;
+      margin-bottom: 8px;
+    }
+    .demo-card.won  { border-left: 3px solid var(--green); }
+    .demo-card.lost { border-left: 3px solid var(--red); }
+    .demo-card.pend { border-left: 3px solid var(--border2); }
+    .demo-card-fighter {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 17px; text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .demo-card-meta {
+      font-size: 11px; color: var(--text3);
+      display: flex; gap: 8px; align-items: center;
+    }
+    .demo-badge {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 2px 8px; border-radius: 3px;
+    }
+    .demo-badge-won  { background: rgba(78,203,113,0.12); color: var(--green); }
+    .demo-badge-lost { background: rgba(232,50,50,0.12); color: var(--red); }
+    .demo-badge-pend { background: var(--bg3); color: var(--text3); }
+    .demo-badge-series { background: var(--bg3); color: var(--text2); }
+    .demo-odds { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:14px; color:var(--green); }
+
+    /* ── FEATURES ─────────────────────── */
+    .features-section {
+      padding: 100px 48px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .features-inner { max-width: 1100px; margin: 0 auto; }
+    .section-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--red);
+      text-align: center; margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: clamp(32px, 5vw, 52px);
+      text-transform: uppercase; text-align: center;
+      line-height: 1.0; margin-bottom: 56px;
+    }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    }
+    .feature-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 28px 24px;
+      transition: border-color 0.2s;
+    }
+    .feature-card:hover { border-color: var(--border2); }
+    .feature-icon {
+      font-size: 28px; margin-bottom: 16px; display: block;
+    }
+    .feature-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 18px; letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .feature-desc { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+    /* ── INTEGRITY SECTION ────────────── */
+    .integrity-section {
+      padding: 100px 48px;
+      max-width: 1100px; margin: 0 auto;
+      text-align: center;
+    }
+    .integrity-big {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: clamp(28px, 4vw, 44px);
+      text-transform: uppercase; line-height: 1.1;
+      max-width: 740px; margin: 16px auto 32px;
+    }
+    .integrity-big span { color: var(--red); }
+    .integrity-points {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; max-width: 800px; margin: 0 auto;
+    }
+    .integrity-point {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 20px 16px;
+    }
+    .integrity-point-icon { font-size: 22px; margin-bottom: 8px; }
+    .integrity-point-text {
+      font-size: 13px; color: var(--text2); line-height: 1.5;
+    }
+    .integrity-point-text strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+    /* ── SERIES SECTION ───────────────── */
+    .series-section {
+      padding: 100px 48px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .series-inner { max-width: 1100px; margin: 0 auto; }
+    .series-pills-display {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      justify-content: center; margin-top: 40px;
+    }
+    .spill {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 14px; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 10px 22px;
+      border-radius: 24px; border: 1px solid;
+    }
+    .spill-ml   { background:rgba(200,200,210,0.06); border-color:rgba(200,200,210,0.2); color:#ccc; }
+    .spill-pp   { background:rgba(78,203,113,0.08);  border-color:rgba(78,203,113,0.3);  color:#4ecb71; }
+    .spill-lsp  { background:rgba(168,85,247,0.08);  border-color:rgba(168,85,247,0.3);  color:#a855f7; }
+    .spill-mov  { background:rgba(240,168,64,0.08);  border-color:rgba(240,168,64,0.3);  color:#f0a840; }
+    .spill-prop { background:rgba(56,189,248,0.08);  border-color:rgba(56,189,248,0.3);  color:#38bdf8; }
+    .series-desc {
+      font-size: 14px; color: var(--text2); text-align: center;
+      max-width: 600px; margin: 20px auto 0; line-height: 1.6;
+    }
+
+    /* ── FINAL CTA ────────────────────── */
+    .cta-section {
+      padding: 120px 48px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 800px; height: 500px;
+      background: radial-gradient(ellipse, rgba(232,50,50,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-style: italic;
+      font-size: clamp(44px, 8vw, 96px);
+      text-transform: uppercase; line-height: 0.95;
+      margin-bottom: 20px;
+    }
+    .cta-title span { color: var(--red); }
+    .cta-sub {
+      font-size: 16px; color: var(--text2);
+      max-width: 480px; margin: 0 auto 40px; line-height: 1.5;
+    }
+
+    /* ── FOOTER ───────────────────────── */
+    footer {
+      background: var(--bg2); border-top: 1px solid var(--border);
+      padding: 32px 48px;
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 20px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text); text-decoration: none;
+    }
+    .footer-logo span { color: var(--red); }
+    .footer-center {
+      font-size: 11px; color: var(--text3); text-align: center;
+    }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-link {
+      font-size: 12px; color: var(--text3); text-decoration: none;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      transition: color 0.15s;
+    }
+    .footer-link:hover { color: var(--text); }
+
+    /* ── ANIMATIONS ───────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ───────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .hero { padding: 100px 20px 60px; }
+      .truth-section, .features-section, .integrity-section,
+      .series-section, .cta-section { padding: 60px 20px; }
+      .truth-grid { grid-template-columns: 1fr; gap: 40px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .integrity-points { grid-template-columns: 1fr; }
+      .truth-stat-row { gap: 20px; }
+      footer { padding: 24px 20px; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+      .demo-card-stack { display: none; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- USERNAME SETUP SCREEN (first time login) -->
-  <div id="username-screen" class="auth-screen hidden">
-    <div class="auth-card">
-      <div class="auth-logo">PICK<span>TAPE</span></div>
-      <p class="auth-sub">Choose your username</p>
-      <p class="username-info">This is how you'll appear publicly. Your real name is never shown.</p>
-      <div class="field" style="margin-bottom:12px; text-align:left;">
-        <label>Username</label>
-        <input type="text" id="inp-username" placeholder="e.g. sharpshooter_mma" maxlength="24" autocomplete="off" />
-        <div class="username-hint">Letters, numbers, and underscores only. Max 24 characters.</div>
-      </div>
-      <div id="username-error" class="form-error hidden"></div>
-      <button id="save-username-btn" class="btn-primary" style="width:100%; margin-top:8px;">Set Username & Continue</button>
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">PICK<span>TAPE</span></a>
+    <div class="nav-right">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#integrity" class="nav-link">Integrity</a>
+      <a href="profile.html" class="nav-link">Community</a>
+      <a href="app.html" class="nav-cta">Get Started →</a>
     </div>
-  </div>
+  </nav>
 
-  <!-- AUTH SCREEN -->
-  <div id="auth-screen" class="auth-screen">
-    <div class="auth-card">
-      <div class="auth-logo">PICK<span>TAPE</span></div>
-      <p class="auth-sub">MMA Fight Pick Tracker</p>
-      <button id="google-signin-btn" class="google-btn">
-        <svg width="18" height="18" viewBox="0 0 48 48" style="margin-right:10px;flex-shrink:0;">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Presented by HitMobb</div>
+    <h1 class="hero-title">
+      Know Your
+      <span class="hero-title-line2">Real Record.</span>
+    </h1>
+    <p class="hero-subtitle">
+      Most MMA fans think they hit more than they do.
+      PICKTAPE holds you accountable — every pick verified,
+      every result permanent, every record honest.
+    </p>
+    <div class="hero-cta-group">
+      <a href="app.html" class="btn-hero btn-hero-primary">
+        <svg width="18" height="18" viewBox="0 0 48 48">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
           <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
           <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
         </svg>
         Sign in with Google
-      </button>
-      <p class="auth-note">Your picks are saved to your account and sync across devices.</p>
+      </a>
+      <a href="#features" class="btn-hero btn-hero-secondary">See how it works ↓</a>
     </div>
-  </div>
+    <div class="hero-proof">
+      <div class="hero-proof-item">Free forever</div>
+      <div class="hero-proof-item">No credit card</div>
+      <div class="hero-proof-item">Verified picks only</div>
+      <div class="hero-proof-item">Your record is real</div>
+    </div>
+  </section>
 
-  <!-- MAIN APP -->
-  <div id="app" class="app hidden">
-
-    <!-- HEADER -->
-    <header class="header">
-      <div class="header-left">
-        <div class="logo">PICK<span>TAPE</span></div>
-        <div class="header-sub">MMA Prediction Tracker</div>
+  <!-- TRUTH SECTION -->
+  <section style="padding:100px 48px; max-width:1100px; margin:0 auto;">
+    <div class="truth-grid">
+      <div class="fade-up">
+        <div class="truth-label">The Problem</div>
+        <h2 class="truth-title">You think you're sharper than you are.</h2>
+        <p class="truth-body">
+          Most people only remember their wins. The losses fade. The bad calls get
+          rationalized. After a while, everyone "hits 70%" in their own head.
+        </p>
+        <p class="truth-body">
+          PICKTAPE exists to fix that. Every pick you log is tied to a real,
+          upcoming UFC event. Once the fight happens, results are permanent.
+          You can't delete a loss. You can't backfill a winner you "called" in
+          your head. Your record is your record.
+        </p>
+        <div class="truth-stat-row">
+          <div class="truth-stat">
+            <div class="truth-stat-num">5</div>
+            <div class="truth-stat-label">Series to track</div>
+          </div>
+          <div class="truth-stat">
+            <div class="truth-stat-num">100%</div>
+            <div class="truth-stat-label">Verified picks</div>
+          </div>
+          <div class="truth-stat">
+            <div class="truth-stat-num">0</div>
+            <div class="truth-stat-label">Backdated picks allowed</div>
+          </div>
+        </div>
       </div>
-      <div class="header-right">
-        <button id="my-profile-btn" class="my-profile-btn">
-          <img id="user-avatar" src="" alt="" class="avatar" />
-          <span id="user-name" class="user-name"></span>
-        </button>
-        <a id="profile-link" href="profile.html" target="_blank" class="community-btn">🥊 Community</a>
-        <button id="signout-btn" class="signout-btn">Sign Out</button>
-      </div>
-    </header>
 
-    <!-- MY PROFILE MODAL -->
-    <div id="my-profile-modal" class="modal-overlay hidden">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div class="modal-title">My Profile</div>
-          <button id="close-profile-modal" class="modal-close">✕</button>
-        </div>
-
-        <!-- Avatar -->
-        <div class="modal-avatar-section">
-          <img id="modal-avatar-preview" src="" alt="" class="modal-avatar" />
-          <div>
-            <div class="modal-avatar-name" id="modal-display-username">—</div>
-            <label class="avatar-upload-btn">
-              Change Photo
-              <input type="file" id="avatar-upload" accept="image/*" style="display:none;" />
-            </label>
+      <!-- Demo pick cards -->
+      <div class="demo-card-stack fade-up">
+        <div class="demo-card won">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div class="demo-card-fighter">Islam Makhachev</div>
+              <div class="demo-card-meta">
+                UFC 311 · Jan 18
+                <span class="demo-badge demo-badge-series">ML Picks</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+              <span class="demo-odds">-180</span>
+              <span class="demo-badge demo-badge-won">WIN</span>
+            </div>
           </div>
         </div>
-
-        <!-- Fields -->
-        <div class="modal-fields">
-          <div class="field">
-            <label>Username <span class="field-note">(shown publicly)</span></label>
-            <input type="text" id="modal-username" placeholder="your_username" maxlength="24" />
-            <div class="username-hint">Letters, numbers, underscores only. Max 24 chars.</div>
-          </div>
-          <div class="field" style="margin-top:12px;">
-            <label>Display Name <span class="field-note">(optional, shown on your profile)</span></label>
-            <input type="text" id="modal-displayname" placeholder="e.g. The Sharpshooter" maxlength="32" />
+        <div class="demo-card lost">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div class="demo-card-fighter">Poirier + Holloway</div>
+              <div class="demo-card-meta">
+                UFC 311 · Jan 18
+                <span class="demo-badge demo-badge-series">Practical Parlay</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+              <span class="demo-odds" style="color:var(--text2);">+340</span>
+              <span class="demo-badge demo-badge-lost">LOSS</span>
+            </div>
           </div>
         </div>
-
-        <div id="modal-error" class="form-error hidden" style="margin-top:12px;"></div>
-        <div id="modal-success" class="success-notice hidden">✓ Profile updated!</div>
-
-        <div class="modal-actions">
-          <button id="save-profile-btn" class="btn-primary">Save Changes</button>
-          <button id="cancel-profile-btn" class="signout-btn">Cancel</button>
+        <div class="demo-card pend">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div class="demo-card-fighter">Pereira by KO</div>
+              <div class="demo-card-meta">
+                UFC 313 · Mar 8
+                <span class="demo-badge demo-badge-series">Method of Victory</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+              <span class="demo-odds">+200</span>
+              <span class="demo-badge demo-badge-pend">PENDING</span>
+            </div>
+          </div>
+        </div>
+        <!-- Stats mini card -->
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;color:var(--green);">61%</div>
+            <div style="font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;">Hit Rate</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;">11–7</div>
+            <div style="font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;">Record</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;color:var(--amber);">+18%</div>
+            <div style="font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;">ROI</div>
+          </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- STATS BAR -->
-    <div class="stats-bar">
-      <div class="stat-card">
-        <div class="stat-label">Total Picks</div>
-        <div class="stat-val" id="stat-total">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Hit Rate</div>
-        <div class="stat-val accent" id="stat-hitrate">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">ROI</div>
-        <div class="stat-val amber" id="stat-roi">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">W — L</div>
-        <div class="stat-val" id="stat-record">0 — 0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Pending</div>
-        <div class="stat-val" id="stat-pending">0</div>
+  <!-- FEATURES -->
+  <section class="features-section" id="features">
+    <div class="features-inner">
+      <div class="section-eyebrow fade-up">What you get</div>
+      <h2 class="section-title fade-up">Everything you need.<br>Nothing you don't.</h2>
+      <div class="features-grid">
+        <div class="feature-card fade-up">
+          <span class="feature-icon">🥊</span>
+          <div class="feature-name">Live Fight Cards</div>
+          <p class="feature-desc">Picks are built directly from upcoming UFC events pulled in real time. Select the event, choose the fight, pick your fighter — no typing, no guessing.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <span class="feature-icon">🧮</span>
+          <div class="feature-name">Parlay Calculator</div>
+          <p class="feature-desc">Add multiple legs to a parlay and watch the combined odds calculate automatically. Know exactly what you're getting before you log it.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <span class="feature-icon">📊</span>
+          <div class="feature-name">Real Analytics</div>
+          <p class="feature-desc">Hit rate over time, ROI by bet type, record per event — your actual performance data, visualized. No more guessing how good you really are.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <span class="feature-icon">🏷️</span>
+          <div class="feature-name">5 Pick Series</div>
+          <p class="feature-desc">Track ML picks, Practical Parlays, Long Shot Parlays, Method of Victory, and Props separately. Find out which style you're actually good at.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <span class="feature-icon">🌐</span>
+          <div class="feature-name">Public Profiles</div>
+          <p class="feature-desc">Your record is public. Your real identity isn't. Choose a username, build a reputation, and let your picks speak for themselves.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <span class="feature-icon">🥋</span>
+          <div class="feature-name">Fight Night Mode</div>
+          <p class="feature-desc">A focused view showing only tonight's pending picks with big WIN / LOSS buttons. Log results fast while you're watching the card.</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- SERIES FILTER BAR -->
-    <div class="series-bar">
-      <span class="series-bar-label">Series:</span>
-      <button class="series-pill active" data-series="all">All Picks</button>
-      <button class="series-pill series-pill--ml" data-series="ML Picks">ML Picks</button>
-      <button class="series-pill series-pill--pp" data-series="Practical Parlay">Practical Parlay</button>
-      <button class="series-pill series-pill--sp" data-series="Long Shot Parlay">Long Shot Parlay</button>
-      <button class="series-pill series-pill--mov" data-series="Method of Victory">Method of Victory</button>
-      <button class="series-pill series-pill--prop" data-series="Prop Picks">Prop Picks</button>
-    </div>
-
-    <!-- TABS -->
-    <div class="tabs">
-      <button class="tab active" data-tab="log">Log Pick</button>
-      <button class="tab" data-tab="pending">Enter Results</button>
-      <button class="tab" data-tab="fightnight">🥊 Fight Night</button>
-      <button class="tab" data-tab="history">History</button>
-      <button class="tab" data-tab="dashboard">Dashboard</button>
-    </div>
-
-    <!-- BODY -->
-    <main class="main">
-
-      <!-- LOG TAB -->
-      <section id="tab-log" class="tab-section">
-        <div class="section-title">New Pick</div>
-        <div class="form-card">
-
-          <!-- Step 1: Event + Series -->
-          <div class="form-step">
-            <div class="step-label">Step 1 — Event & Series</div>
-            <div class="form-row">
-              <div class="field" style="flex:2;">
-                <label>Upcoming UFC Events <span id="event-loading" class="loading-tag hidden">Loading...</span></label>
-                <select id="inp-event-select">
-                  <option value="">Loading events...</option>
-                </select>
-              </div>
-              <div class="field field-sm">
-                <label>Series</label>
-                <select id="inp-series">
-                  <option value="ML Picks">ML Picks</option>
-                  <option value="Practical Parlay">Practical Parlay</option>
-                  <option value="Long Shot Parlay">Long Shot Parlay</option>
-                  <option value="Method of Victory">Method of Victory</option>
-                  <option value="Prop Picks">Prop Picks</option>
-                </select>
-              </div>
-            </div>
-            <!-- Prop label field — shown only for Prop Picks -->
-            <div id="prop-label-field" class="manual-fallback hidden" style="margin-top:10px;">
-              <div class="field">
-                <label>Prop Description</label>
-                <input type="text" id="inp-prop-label" placeholder="e.g. Poirier wins by KO in Round 1" />
-              </div>
-            </div>
-            <!-- Integrity notice -->
-            <div class="integrity-notice">
-              🔒 Picks can only be logged from verified upcoming UFC events. This keeps all records honest.
-            </div>
-          </div>
-
-          <!-- Step 2: Parlay Legs Builder -->
-          <div id="fight-section" class="form-step hidden" style="margin-top:16px;">
-            <div class="step-label-row">
-              <div class="step-label">Step 2 — Add Legs</div>
-              <div class="parlay-odds-display" id="parlay-odds-display" style="display:none;">
-                Combined Odds: <span id="parlay-odds-val">—</span>
-              </div>
-            </div>
-
-            <!-- Leg builder -->
-            <div class="leg-builder" id="leg-builder">
-              <div class="form-row" id="leg-add-row">
-                <div class="field" style="flex:1;">
-                  <label>Fight</label>
-                  <select id="inp-fight-select">
-                    <option value="">— Select a fight —</option>
-                  </select>
-                </div>
-                <div class="field" style="flex:1;">
-                  <label>Your Pick</label>
-                  <select id="inp-fighter-select">
-                    <option value="">— Select a fighter —</option>
-                  </select>
-                </div>
-                <div class="field field-sm" id="mov-type-field" style="display:none;">
-                  <label>Method</label>
-                  <select id="inp-mov-type">
-                    <option value="KO">KO/TKO</option>
-                    <option value="Sub">Submission</option>
-                    <option value="DEC">Decision</option>
-                  </select>
-                </div>
-                <div class="field field-sm">
-                  <label>Leg Odds</label>
-                  <input type="text" id="inp-leg-odds" placeholder="+150" />
-                </div>
-                <button class="btn-secondary" id="add-leg-btn">+ Add Leg</button>
-              </div>
-            </div>
-
-            <!-- Legs list -->
-            <div id="legs-list" class="legs-list"></div>
-          </div>
-
-          <!-- Step 3: Final Details -->
-          <div class="form-step" style="margin-top:16px;">
-            <div class="step-label">Step 3 — Notes & Submit</div>
-            <div class="form-row">
-              <div class="field" style="flex:1;">
-                <label>Notes (optional)</label>
-                <input type="text" id="inp-notes" placeholder="Reasoning, confidence level, etc." />
-              </div>
-              <button class="btn-primary" id="add-pick-btn">+ Log Pick</button>
-            </div>
-          </div>
-
-          <div id="form-error" class="form-error hidden">
-            Please add at least one leg with valid odds before logging.
-          </div>
-        </div>
-      </section>
-
-      <!-- PENDING TAB -->
-      <section id="tab-pending" class="tab-section hidden">
-        <div class="section-title">Pending Picks — Enter Results</div>
-        <div id="pending-list" class="picks-list"></div>
-        <div id="pending-empty" class="empty-state hidden">
-          <div class="empty-icon">—</div>
-          <div>No pending picks. Log some picks first.</div>
-        </div>
-      </section>
-
-      <!-- FIGHT NIGHT TAB -->
-      <section id="tab-fightnight" class="tab-section hidden">
-        <div class="fn-header">
-          <div>
-            <div class="section-title" style="margin:0;">Fight Night Mode</div>
-            <div class="fn-subtitle">Quick W/L entry for tonight's card</div>
-          </div>
-          <select id="fn-event-filter" class="filter-select">
-            <option value="">— Select tonight's event —</option>
-          </select>
-        </div>
-        <div id="fn-picks-list" class="fn-picks-list"></div>
-        <div id="fn-empty" class="empty-state">
-          <div class="empty-icon">🥊</div>
-          <div>Select an event above to see your pending picks.</div>
-        </div>
-        <div id="fn-done" class="fn-done hidden">
-          <div class="fn-done-icon">✓</div>
-          <div class="fn-done-text">All picks settled for this event!</div>
-        </div>
-      </section>
-
-      <!-- HISTORY TAB -->
-      <section id="tab-history" class="tab-section hidden">
-        <div class="history-controls">
-          <div class="section-title" style="margin:0;">All Picks</div>
-          <div class="filter-row">
-            <select id="filter-result" class="filter-select">
-              <option value="all">All Results</option>
-              <option value="won">Wins</option>
-              <option value="lost">Losses</option>
-              <option value="pending">Pending</option>
-            </select>
-            <select id="filter-type" class="filter-select">
-              <option value="all">All Types</option>
-              <option value="Single">Singles</option>
-              <option value="Parlay">Parlays</option>
-              <option value="Prop">Props</option>
-            </select>
-            <select id="filter-event" class="filter-select">
-              <option value="all">All Events</option>
-            </select>
-          </div>
-        </div>
-        <div id="history-list" class="picks-list"></div>
-        <div id="history-empty" class="empty-state hidden">
-          <div class="empty-icon">UFC</div>
-          <div>No picks match your filters.</div>
-        </div>
-      </section>
-
-      <!-- DASHBOARD TAB -->
-      <section id="tab-dashboard" class="tab-section hidden">
-        <div class="section-title">Performance Dashboard</div>
-
-        <!-- Summary Cards Row -->
-        <div class="dash-summary">
-          <div class="dash-card">
-            <div class="dash-card-label">Best Bet Type</div>
-            <div class="dash-card-val" id="dash-best-type">—</div>
-            <div class="dash-card-sub" id="dash-best-type-sub"></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-label">Biggest Win (Odds)</div>
-            <div class="dash-card-val green" id="dash-biggest-win">—</div>
-            <div class="dash-card-sub" id="dash-biggest-win-sub"></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-label">Current Streak</div>
-            <div class="dash-card-val" id="dash-streak">—</div>
-            <div class="dash-card-sub" id="dash-streak-sub"></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-label">Avg Odds (Wins)</div>
-            <div class="dash-card-val amber" id="dash-avg-odds">—</div>
-            <div class="dash-card-sub">per winning pick</div>
-          </div>
-        </div>
-
-        <!-- Charts Grid -->
-        <div class="charts-grid">
-
-          <!-- Donut: Win/Loss/Pending -->
-          <div class="chart-card chart-card--sm">
-            <div class="chart-title">Result Breakdown</div>
-            <div class="chart-wrap chart-wrap--donut">
-              <canvas id="chart-donut"></canvas>
-              <div class="donut-center" id="donut-center-text"></div>
-            </div>
-          </div>
-
-          <!-- Line: Hit Rate Over Time -->
-          <div class="chart-card chart-card--lg">
-            <div class="chart-title">Hit Rate Over Time <span class="chart-note">(rolling, by pick)</span></div>
-            <div class="chart-wrap">
-              <canvas id="chart-line"></canvas>
-            </div>
-          </div>
-
-          <!-- Bar: ROI by Bet Type -->
-          <div class="chart-card chart-card--md">
-            <div class="chart-title">ROI by Bet Type</div>
-            <div class="chart-wrap">
-              <canvas id="chart-roi-type"></canvas>
-            </div>
-          </div>
-
-          <!-- Bar: Record per Event -->
-          <div class="chart-card chart-card--md">
-            <div class="chart-title">Record per Event</div>
-            <div class="chart-wrap">
-              <canvas id="chart-events"></canvas>
-            </div>
-          </div>
-
-        </div>
-
-        <div id="dash-empty" class="empty-state hidden">
-          <div class="empty-icon">📊</div>
-          <div>Log and settle some picks to see your dashboard.</div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <div class="footer-left">
-          <div class="footer-logo">PICK<span>TAPE</span></div>
-          <div class="footer-presented">Presented by <strong>HitMobb</strong></div>
-        </div>
-        <div class="footer-center">
-          <p class="footer-disclaimer">
-            PICKTAPE is for entertainment and personal tracking purposes only.
-            We do not facilitate, promote, or encourage gambling of any kind.
-            All picks and records displayed are user-generated content.
-            Past performance does not guarantee future results.
-          </p>
-        </div>
-        <div class="footer-right">
-          <div class="footer-links">
-            <a href="privacy.html" class="footer-link">Privacy Policy</a>
-            <a href="terms.html" class="footer-link">Terms of Use</a>
-          </div>
-          <div class="footer-copy">
-            &copy; <span id="footer-year"></span> PICKTAPE &amp; HitMobb.<br/>
-            All rights reserved.
-          </div>
+  <!-- INTEGRITY SECTION -->
+  <section class="integrity-section" id="integrity">
+    <div class="section-eyebrow fade-up">Built different</div>
+    <h2 class="integrity-big fade-up">
+      Your record can't be <span>faked.</span><br>
+      That's the whole point.
+    </h2>
+    <p style="font-size:15px;color:var(--text2);max-width:560px;margin:0 auto 40px;line-height:1.6;" class="fade-up">
+      We built PICKTAPE for people who want to genuinely understand their relationship
+      with MMA betting — not inflate their egos. Every design decision reflects that.
+    </p>
+    <div class="integrity-points fade-up">
+      <div class="integrity-point">
+        <div class="integrity-point-icon">🔒</div>
+        <div class="integrity-point-text">
+          <strong>No backdating</strong>
+          Picks only log against upcoming, verified UFC events. Past fights can't be added retroactively.
         </div>
       </div>
-    </footer>
+      <div class="integrity-point">
+        <div class="integrity-point-icon">⛔</div>
+        <div class="integrity-point-text">
+          <strong>No deleting losses</strong>
+          Once a pick is marked won or lost, it's permanent. Your record is your record.
+        </div>
+      </div>
+      <div class="integrity-point">
+        <div class="integrity-point-icon">👤</div>
+        <div class="integrity-point-text">
+          <strong>Privacy by default</strong>
+          Your real name and email are never shown. You choose your username. Your Google account stays private.
+        </div>
+      </div>
+    </div>
+  </section>
 
-  </div>
+  <!-- SERIES SECTION -->
+  <section class="series-section">
+    <div class="series-inner">
+      <div class="section-eyebrow fade-up">Track every angle</div>
+      <h2 class="section-title fade-up">Five ways to follow your game.</h2>
+      <div class="series-pills-display fade-up">
+        <div class="spill spill-ml">ML Picks</div>
+        <div class="spill spill-pp">Practical Parlay</div>
+        <div class="spill spill-lsp">Long Shot Parlay</div>
+        <div class="spill spill-mov">Method of Victory</div>
+        <div class="spill spill-prop">Prop Picks</div>
+      </div>
+      <p class="series-desc fade-up">
+        Not all picks are the same. Track your moneyline record separately from your parlay record.
+        Find out if your method of victory calls actually hold up. Know which series is making
+        you money and which one is costing you.
+      </p>
+    </div>
+  </section>
 
-  <!-- LOADING OVERLAY -->
-  <div id="loading" class="loading-overlay">
-    <div class="loading-logo">PICK<span>TAPE</span></div>
-  </div>
+  <!-- FINAL CTA -->
+  <section class="cta-section">
+    <h2 class="cta-title fade-up">
+      Ready to face<br><span>the truth?</span>
+    </h2>
+    <p class="cta-sub fade-up">
+      Free forever. Sign in with Google in 10 seconds.
+      Your picks. Your record. No excuses.
+    </p>
+    <a href="app.html" class="btn-hero btn-hero-primary fade-up" style="font-size:16px;padding:16px 44px;">
+      Start Tracking Free →
+    </a>
+    <p style="margin-top:20px;font-size:12px;color:var(--text3);" class="fade-up">
+      Presented by HitMobb &nbsp;·&nbsp; For entertainment purposes only
+    </p>
+  </section>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script type="module" src="js/firebase-config.js"></script>
-  <script type="module" src="js/app.js"></script>
-  <script>document.getElementById("footer-year").textContent = new Date().getFullYear();</script>
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <a href="index.html" class="footer-logo">PICK<span>TAPE</span></a>
+      <div class="footer-center">
+        &copy; <span id="footer-year"></span> PICKTAPE &amp; HitMobb. All rights reserved.
+      </div>
+      <div class="footer-links">
+        <a href="profile.html" class="footer-link">Community</a>
+        <a href="privacy.html" class="footer-link">Privacy</a>
+        <a href="terms.html" class="footer-link">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Auto year
+    document.getElementById("footer-year").textContent = new Date().getFullYear();
+
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          // Stagger children
+          entry.target.querySelectorAll(".fade-up").forEach((el, i) => {
+            el.style.transitionDelay = (i * 0.08) + "s";
+            el.classList.add("visible");
+          });
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll(".fade-up").forEach(el => observer.observe(el));
+  </script>
 </body>
 </html>
