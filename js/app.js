@@ -505,6 +505,7 @@ eventSelect.addEventListener("change", () => {
   fightSelect.innerHTML   = '<option value="">— Select a fight —</option>';
   legs = [];
   renderLegs();
+  updateAddLegBtn();
   selectedFight = null;
 
   if (idx === "") return;
@@ -561,13 +562,35 @@ document.getElementById("inp-series").addEventListener("change", () => {
   propField.classList.toggle("hidden", !isProp());
   legs = [];
   renderLegs();
+  updateAddLegBtn();
 });
+
+function isML() { return document.getElementById("inp-series").value === "ML Picks"; }
+
+// Show/hide Add Leg button based on series and current leg count
+function updateAddLegBtn() {
+  const addLegBtn  = document.getElementById("add-leg-btn");
+  const legSection = document.getElementById("leg-add-row");
+  // ML Picks: only 1 leg allowed — hide the add row once one leg is added
+  if (isML() && legs.length >= 1) {
+    legSection.style.display = "none";
+  } else {
+    legSection.style.display = "";
+  }
+}
 
 // Add Leg button
 document.getElementById("add-leg-btn").addEventListener("click", () => {
   const fighter  = fighterSelect.value;
   const oddsRaw  = document.getElementById("inp-leg-odds").value.trim();
   const odds     = parseInt(oddsRaw);
+
+  // ML Picks — block more than 1 leg
+  if (isML() && legs.length >= 1) {
+    document.getElementById("form-error").classList.remove("hidden");
+    document.getElementById("form-error").textContent = "ML Picks only support a single fighter — use Practical Parlay or Long Shot Parlay for multi-leg picks.";
+    return;
+  }
 
   if (!fighter || isNaN(odds)) {
     document.getElementById("form-error").classList.remove("hidden");
@@ -583,6 +606,7 @@ document.getElementById("add-leg-btn").addEventListener("click", () => {
 
   legs.push({ fighter, opponent, odds: odds.toString(), movType });
   renderLegs();
+  updateAddLegBtn();
 
   // Reset leg row
   fighterSelect.innerHTML = '<option value="">— Select a fighter —</option>';
@@ -732,6 +756,7 @@ addPickBtn.addEventListener("click", async () => {
     legs          = [];
     selectedFight = null;
     renderLegs();
+    updateAddLegBtn();
   } catch (err) {
     console.error("Error saving:", err);
     alert("Error saving pick. Check your connection.");
