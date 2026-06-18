@@ -377,7 +377,122 @@
     }
     .footer-link:hover { color: var(--text); }
 
-    /* ── ANIMATIONS ───────────────────── */
+    .hero-tagline {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(16px, 2.5vw, 22px);
+      font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text2);
+      margin-bottom: 12px;
+      opacity: 0; animation: fadeUp 0.6s 0.48s ease forwards;
+    }
+
+    /* ── RESPONSIBLE GAMBLING ─────────── */
+    .rg-section {
+      padding: 100px 48px;
+      background: #0a0508;
+      border-top: 1px solid rgba(232,50,50,0.15);
+      border-bottom: 1px solid rgba(232,50,50,0.15);
+      position: relative;
+    }
+    .rg-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,50,50,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .rg-inner { max-width: 800px; margin: 0 auto; }
+    .rg-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--red);
+      margin-bottom: 14px;
+    }
+    .rg-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: clamp(32px, 5vw, 52px);
+      text-transform: uppercase; line-height: 1.0;
+      margin-bottom: 28px;
+    }
+    .rg-body {
+      font-size: 15px; color: var(--text2);
+      line-height: 1.8; margin-bottom: 16px;
+    }
+    .rg-hotline {
+      display: flex; align-items: center; gap: 20px;
+      background: rgba(232,50,50,0.06);
+      border: 1px solid rgba(232,50,50,0.2);
+      border-radius: 10px; padding: 20px 24px;
+      margin: 32px 0;
+    }
+    .rg-hotline-icon { font-size: 32px; flex-shrink: 0; }
+    .rg-hotline-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 13px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text2); margin-bottom: 6px;
+    }
+    .rg-hotline-number {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 32px;
+      color: var(--red); text-decoration: none;
+      letter-spacing: 0.04em; display: block;
+      transition: opacity 0.15s;
+    }
+    .rg-hotline-number:hover { opacity: 0.8; }
+    .rg-hotline-sub {
+      font-size: 12px; color: var(--text3);
+      margin-top: 4px;
+    }
+    .rg-points {
+      display: flex; flex-direction: column; gap: 16px;
+      margin-top: 28px;
+    }
+    .rg-point {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px 18px;
+    }
+    .rg-point-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .rg-point-text { font-size: 14px; color: var(--text2); line-height: 1.6; }
+    .rg-point-text strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+    @media (max-width: 768px) {
+      .rg-section { padding: 60px 20px; }
+      .rg-hotline { flex-direction: column; text-align: center; gap: 12px; }
+      .rg-hotline-number { font-size: 26px; }
+    }
+    .nav-social {
+      color: var(--text3); transition: color 0.15s;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; text-decoration: none; letter-spacing: 0.04em;
+    }
+    .nav-social:hover { color: var(--text); }
+    .nav-follow-group {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .nav-follow-label {
+      font-size: 11px; color: var(--text3);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .nav-divider {
+      width: 1px; height: 18px;
+      background: var(--border2); margin: 0 4px;
+    }
+    .footer-socials { display: flex; gap: 14px; align-items: center; }
+    .social-link {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text3);
+      text-decoration: none; letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+    .social-link:hover { color: var(--text); }
+
+    @media (max-width: 768px) {
+      .nav-follow-group { display: none; }
+      .nav-divider { display: none; }
+    }
+
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -422,6 +537,18 @@
   <nav>
     <a href="index.html" class="nav-logo">PICK<span>TAPE</span></a>
     <div class="nav-right">
+      <div class="nav-follow-group">
+        <span class="nav-follow-label">Follow us</span>
+        <a href="https://instagram.com/hitmobbmma" target="_blank" rel="noopener noreferrer" class="nav-social" title="Instagram @hitmobbmma">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          @hitmobbmma
+        </a>
+        <a href="https://tiktok.com/@hitmobb" target="_blank" rel="noopener noreferrer" class="nav-social" title="TikTok @hitmobb">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.75a4.85 4.85 0 01-1.01-.06z"/></svg>
+          @hitmobb
+        </a>
+      </div>
+      <div class="nav-divider"></div>
       <a href="#features" class="nav-link">Features</a>
       <a href="#integrity" class="nav-link">Integrity</a>
       <a href="profile.html" class="nav-link">Community</a>
@@ -433,9 +560,9 @@
   <section class="hero">
     <div class="hero-eyebrow">Presented by HitMobb</div>
     <h1 class="hero-title">
-      Know Your
-      <span class="hero-title-line2">Real Record.</span>
+      PICK<span class="hero-title-line2">TAPE</span>
     </h1>
+    <p class="hero-tagline">Track your betting practices. Know your real record.</p>
     <p class="hero-subtitle">
       Most MMA fans think they hit more than they do.
       PICKTAPE holds you accountable — every pick verified,
@@ -655,6 +782,65 @@
     </div>
   </section>
 
+  <!-- RESPONSIBLE GAMBLING SECTION -->
+  <section class="rg-section" id="responsibility">
+    <div class="rg-inner">
+      <div class="rg-content fade-up">
+        <div class="rg-eyebrow">This matters more than your record</div>
+        <h2 class="rg-title">Gambling addiction is real.<br>So is the damage it causes.</h2>
+        <p class="rg-body">
+          Sports betting is more accessible than ever. Apps make it easy to place a bet in seconds,
+          and the excitement of MMA makes it even harder to step back and think clearly.
+          Problem gambling doesn't just hurt your wallet — it affects your relationships,
+          your mental health, and your life.
+        </p>
+        <p class="rg-body">
+          PICKTAPE was built with this reality in mind. By tracking every pick honestly —
+          including the losses you'd rather forget — you get a clear picture of your actual
+          relationship with betting. That self-awareness is the first and most important step
+          toward keeping it under control.
+        </p>
+        <p class="rg-body">
+          If you or someone you know is struggling with gambling, help is available right now.
+          You don't have to figure it out alone.
+        </p>
+
+        <div class="rg-hotline">
+          <div class="rg-hotline-icon">📞</div>
+          <div class="rg-hotline-content">
+            <div class="rg-hotline-title">National Problem Gambling Helpline</div>
+            <a href="tel:18004269337" class="rg-hotline-number">1-800-GAMBLER</a>
+            <div class="rg-hotline-sub">Call or text 1-800-426-9377 · Available 24/7, free and confidential</div>
+          </div>
+        </div>
+
+        <div class="rg-points">
+          <div class="rg-point">
+            <div class="rg-point-icon">⚠️</div>
+            <div class="rg-point-text">
+              <strong>Know the warning signs</strong>
+              Chasing losses, betting more than you can afford, hiding bets from loved ones, or feeling like you can't stop.
+            </div>
+          </div>
+          <div class="rg-point">
+            <div class="rg-point-icon">📊</div>
+            <div class="rg-point-text">
+              <strong>Track to stay aware</strong>
+              Seeing your real numbers — including a losing streak — can be the wake-up call that prevents a serious problem from becoming a crisis.
+            </div>
+          </div>
+          <div class="rg-point">
+            <div class="rg-point-icon">🤝</div>
+            <div class="rg-point-text">
+              <strong>Ask for help early</strong>
+              The earlier you reach out, the easier recovery is. There is no shame in recognizing a problem and taking action.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- FINAL CTA -->
   <section class="cta-section">
     <h2 class="cta-title fade-up">
@@ -677,12 +863,25 @@
     <div class="footer-inner">
       <a href="index.html" class="footer-logo">PICK<span>TAPE</span></a>
       <div class="footer-center">
-        &copy; <span id="footer-year"></span> PICKTAPE &amp; HitMobb. All rights reserved.
+        &copy; <span id="footer-year"></span> PICKTAPE &amp; HitMobb. All rights reserved.<br/>
+        <span style="font-size:10px;">If you or someone you know has a gambling problem, call <a href="tel:18004269337" style="color:var(--red);text-decoration:none;">1-800-GAMBLER</a></span>
       </div>
-      <div class="footer-links">
-        <a href="profile.html" class="footer-link">Community</a>
-        <a href="privacy.html" class="footer-link">Privacy</a>
-        <a href="terms.html" class="footer-link">Terms</a>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
+        <div class="footer-links">
+          <a href="profile.html" class="footer-link">Community</a>
+          <a href="privacy.html" class="footer-link">Privacy</a>
+          <a href="terms.html" class="footer-link">Terms</a>
+        </div>
+        <div class="footer-socials">
+          <a href="https://instagram.com/hitmobbmma" target="_blank" rel="noopener noreferrer" class="social-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            @hitmobbmma
+          </a>
+          <a href="https://tiktok.com/@hitmobb" target="_blank" rel="noopener noreferrer" class="social-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.75a4.85 4.85 0 01-1.01-.06z"/></svg>
+            @hitmobb
+          </a>
+        </div>
       </div>
     </div>
   </footer>
