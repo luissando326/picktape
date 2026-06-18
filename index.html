@@ -74,28 +74,27 @@
       align-items: center; justify-content: center;
       text-align: center; padding: 120px 24px 80px;
       position: relative; overflow: hidden;
+      background-image: url('images/bg-arena-crowd.jpg');
+      background-size: cover;
+      background-position: center 30%;
+      background-attachment: fixed;
     }
 
-    /* Background grid */
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(rgba(232,50,50,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(232,50,50,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-    }
-
-    /* Red glow */
+    /* Dark overlay over hero image */
     .hero::after {
       content: '';
-      position: absolute;
-      top: 20%; left: 50%; transform: translateX(-50%);
-      width: 600px; height: 400px;
-      background: radial-gradient(ellipse, rgba(232,50,50,0.12) 0%, transparent 70%);
-      pointer-events: none;
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(8,8,9,0.75) 0%,
+        rgba(8,8,9,0.65) 40%,
+        rgba(8,8,9,0.85) 100%
+      );
+      z-index: 0;
     }
+
+    /* Ensure hero content sits above overlay */
+    .hero > * { position: relative; z-index: 1; }
 
     .hero-eyebrow {
       font-family: 'Barlow Condensed', sans-serif;
@@ -589,7 +588,10 @@
   </section>
 
   <!-- TRUTH SECTION -->
-  <section style="padding:100px 48px; max-width:1100px; margin:0 auto;">
+  <section style="padding:100px 48px; position:relative; overflow:hidden;">
+    <div style="position:absolute;inset:0;background-image:url('images/bg-cage.jpg');background-size:cover;background-position:center;background-attachment:fixed;opacity:0.08;z-index:0;"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(8,8,9,0.97) 40%,rgba(8,8,9,0.85) 100%);z-index:1;"></div>
+    <div style="position:relative;z-index:2;max-width:1100px;margin:0 auto;">
     <div class="truth-grid">
       <div class="fade-up">
         <div class="truth-label">The Problem</div>
@@ -684,6 +686,7 @@
         </div>
       </div>
     </div>
+    </div>
   </section>
 
   <!-- FEATURES -->
@@ -727,7 +730,10 @@
   </section>
 
   <!-- INTEGRITY SECTION -->
-  <section class="integrity-section" id="integrity">
+  <section class="integrity-section" id="integrity" style="position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background-image:url('images/bg-arena-wide.jpg');background-size:cover;background-position:center;background-attachment:fixed;opacity:0.07;z-index:0;"></div>
+    <div style="position:absolute;inset:0;background:rgba(8,8,9,0.92);z-index:1;"></div>
+    <div style="position:relative;z-index:2;">
     <div class="section-eyebrow fade-up">Built different</div>
     <h2 class="integrity-big fade-up">
       Your record can't be <span>faked.</span><br>
@@ -759,6 +765,7 @@
           Your real name and email are never shown. You choose your username. Your Google account stays private.
         </div>
       </div>
+    </div>
     </div>
   </section>
 
