@@ -661,12 +661,17 @@ document.getElementById("inp-series").addEventListener("change", () => {
 
 function isML() { return document.getElementById("inp-series").value === "ML Picks"; }
 
+// Series that only allow a single leg — no parlay combining
+function isSingleLegSeries() {
+  return isML() || isMoV() || isProp();
+}
+
 // Show/hide Add Leg button based on series and current leg count
 function updateAddLegBtn() {
   const addLegBtn  = document.getElementById("add-leg-btn");
   const legSection = document.getElementById("leg-add-row");
-  // ML Picks: only 1 leg allowed — hide the add row once one leg is added
-  if (isML() && legs.length >= 1) {
+  // ML Picks, Method of Victory, Prop Picks: only 1 leg allowed — hide the add row once one leg is added
+  if (isSingleLegSeries() && legs.length >= 1) {
     legSection.style.display = "none";
   } else {
     legSection.style.display = "";
@@ -679,10 +684,10 @@ document.getElementById("add-leg-btn").addEventListener("click", () => {
   const oddsRaw  = document.getElementById("inp-leg-odds").value.trim();
   const odds     = parseInt(oddsRaw);
 
-  // ML Picks — block more than 1 leg
-  if (isML() && legs.length >= 1) {
+  // ML Picks, Method of Victory, Prop Picks — block more than 1 leg
+  if (isSingleLegSeries() && legs.length >= 1) {
     document.getElementById("form-error").classList.remove("hidden");
-    document.getElementById("form-error").textContent = "ML Picks only support a single fighter — use Practical Parlay or Long Shot Parlay for multi-leg picks.";
+    document.getElementById("form-error").textContent = "This series only supports a single fighter — use Practical Parlay or Long Shot Parlay for multi-leg picks.";
     return;
   }
 
