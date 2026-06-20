@@ -163,15 +163,35 @@
       </div>
     </div>
 
-    <!-- SERIES FILTER BAR -->
-    <div class="series-bar">
-      <span class="series-bar-label">Series:</span>
-      <button class="series-pill active" data-series="all">All Picks</button>
-      <button class="series-pill series-pill--ml" data-series="ML Picks">ML Picks</button>
-      <button class="series-pill series-pill--pp" data-series="Practical Parlay">Practical Parlay</button>
-      <button class="series-pill series-pill--sp" data-series="Long Shot Parlay">Long Shot Parlay</button>
-      <button class="series-pill series-pill--mov" data-series="Method of Victory">Method of Victory</button>
-      <button class="series-pill series-pill--prop" data-series="Prop Picks">Prop Picks</button>
+    <!-- SERIES SELECTOR -->
+    <div class="series-selector">
+      <div class="series-selector-label">Choose Your Series</div>
+      <div class="series-cards">
+        <button class="series-card active" data-series="all">
+          <div class="sc-name">All Picks</div>
+          <div class="sc-desc">View everything together</div>
+        </button>
+        <button class="series-card series-card--ml" data-series="ML Picks">
+          <div class="sc-name">ML Picks</div>
+          <div class="sc-desc">Pick which fighter wins</div>
+        </button>
+        <button class="series-card series-card--pp" data-series="Practical Parlay">
+          <div class="sc-name">Practical Parlay</div>
+          <div class="sc-desc">A reasonable-odds parlay</div>
+        </button>
+        <button class="series-card series-card--sp" data-series="Long Shot Parlay">
+          <div class="sc-name">Long Shot Parlay</div>
+          <div class="sc-desc">High-risk, high-reward parlay</div>
+        </button>
+        <button class="series-card series-card--mov" data-series="Method of Victory">
+          <div class="sc-name">Method of Victory</div>
+          <div class="sc-desc">Predict how the fight ends</div>
+        </button>
+        <button class="series-card series-card--prop" data-series="Prop Picks">
+          <div class="sc-name">Prop Picks</div>
+          <div class="sc-desc">A specific prop, like O/U</div>
+        </button>
+      </div>
     </div>
 
     <!-- TABS -->
@@ -189,11 +209,19 @@
       <!-- LOG TAB -->
       <section id="tab-log" class="tab-section">
         <div class="section-title">New Pick</div>
-        <div class="form-card">
+
+        <!-- Shown when no specific series is selected -->
+        <div id="no-series-prompt" class="no-series-prompt">
+          <div class="nsp-icon">👆</div>
+          <div class="nsp-title">Select a series above to start logging a pick</div>
+          <div class="nsp-sub">Each series tracks a different kind of bet — choose one to lock in your pick type.</div>
+        </div>
+
+        <div id="log-form-card" class="form-card hidden">
 
           <!-- Step 1: Event + Series -->
           <div class="form-step">
-            <div class="step-label">Step 1 — Event & Series</div>
+            <div class="step-label">Step 1 — Select Event</div>
             <div class="form-row">
               <div class="field" style="flex:2;">
                 <label>Upcoming UFC Events <span id="event-loading" class="loading-tag hidden">Loading...</span></label>
@@ -203,7 +231,9 @@
               </div>
               <div class="field field-sm">
                 <label>Series</label>
-                <select id="inp-series">
+                <div id="locked-series-display" class="locked-series-display">ML Picks</div>
+                <!-- Hidden select kept for compatibility with existing JS logic -->
+                <select id="inp-series" style="display:none;">
                   <option value="ML Picks">ML Picks</option>
                   <option value="Practical Parlay">Practical Parlay</option>
                   <option value="Long Shot Parlay">Long Shot Parlay</option>
@@ -340,6 +370,7 @@
             Please add at least one leg with valid odds before logging.
           </div>
         </div>
+        <!-- /log-form-card -->
       </section>
 
       <!-- PENDING TAB -->

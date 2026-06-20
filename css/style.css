@@ -313,38 +313,96 @@ html, body {
   font-size: 48px; font-weight: 900; color: var(--border); margin-bottom: 10px;
 }
 
-/* ── SERIES BAR ──────────────────────────── */
-.series-bar {
-  display: flex; align-items: center; gap: 8px;
+/* ── SERIES SELECTOR (prominent cards) ──── */
+.series-selector {
   background: var(--bg2); border-bottom: 1px solid var(--border);
-  padding: 10px 28px; flex-wrap: wrap;
+  padding: 18px 28px;
 }
-.series-bar-label {
-  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--text3); margin-right: 4px;
-}
-.series-pill {
+.series-selector-label {
   font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 600; font-size: 12px;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 5px 14px; border-radius: 20px;
-  border: 1px solid var(--border2);
-  background: transparent; color: var(--text3);
-  cursor: pointer; transition: all 0.15s;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 12px;
 }
-.series-pill:hover { border-color: var(--text2); color: var(--text); }
-.series-pill.active {
-  background: var(--border2); color: var(--text);
-  border-color: var(--border2);
+.series-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
 }
-.series-pill--pp.active { background: rgba(78,203,113,0.15); border-color: #4ecb71; color: #4ecb71; }
-.series-pill--sp.active { background: rgba(168,85,247,0.15); border-color: #a855f7; color: #a855f7; }
-.series-pill--pp:hover  { border-color: #4ecb71; color: #4ecb71; }
-.series-pill--sp:hover  { border-color: #a855f7; color: #a855f7; }
+.series-card {
+  background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: var(--radius); padding: 12px 14px;
+  cursor: pointer; transition: all 0.15s; text-align: left;
+}
+.series-card:hover { border-color: var(--text2); transform: translateY(-1px); }
+.sc-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 14px;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text2); margin-bottom: 3px;
+}
+.sc-desc {
+  font-size: 10.5px; color: var(--text3);
+  line-height: 1.4;
+}
 
-.series-pill--mov.active { background: rgba(240,168,64,0.15); border-color: var(--amber); color: var(--amber); }
-.series-pill--mov:hover  { border-color: var(--amber); color: var(--amber); }
-.series-mov { background: rgba(240,168,64,0.12); color: var(--amber); }
+.series-card.active { border-width: 2px; }
+.series-card.active .sc-name { color: var(--text); }
+
+.series-card[data-series="all"].active { background: var(--border2); border-color: var(--border2); }
+
+.series-card--ml.active  { background: rgba(200,200,210,0.08); border-color: #ccc; }
+.series-card--ml.active .sc-name { color: #ddd; }
+
+.series-card--pp.active { background: rgba(78,203,113,0.1); border-color: #4ecb71; }
+.series-card--pp.active .sc-name { color: #4ecb71; }
+.series-card--pp:hover { border-color: #4ecb71; }
+
+.series-card--sp.active { background: rgba(168,85,247,0.1); border-color: #a855f7; }
+.series-card--sp.active .sc-name { color: #a855f7; }
+.series-card--sp:hover { border-color: #a855f7; }
+
+.series-card--mov.active { background: rgba(240,168,64,0.1); border-color: var(--amber); }
+.series-card--mov.active .sc-name { color: var(--amber); }
+.series-card--mov:hover { border-color: var(--amber); }
+
+.series-card--prop.active { background: rgba(56,189,248,0.1); border-color: #38bdf8; }
+.series-card--prop.active .sc-name { color: #38bdf8; }
+.series-card--prop:hover { border-color: #38bdf8; }
+
+/* ── LOCKED SERIES DISPLAY (in Log Pick form) ── */
+.locked-series-display {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 9px 12px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 14px; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+}
+.locked-series-display::before { content: '🔒'; font-size: 11px; }
+
+/* ── NO SERIES SELECTED PROMPT ───────────── */
+.no-series-prompt {
+  text-align: center; padding: 60px 20px;
+  background: var(--bg2); border: 1px dashed var(--border2);
+  border-radius: var(--radius-lg);
+}
+.nsp-icon { font-size: 32px; margin-bottom: 12px; }
+.nsp-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 17px;
+  letter-spacing: 0.02em; color: var(--text);
+  margin-bottom: 6px;
+}
+.nsp-sub { font-size: 13px; color: var(--text3); max-width: 420px; margin: 0 auto; }
+
+@media (max-width: 900px) {
+  .series-cards { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .series-cards { grid-template-columns: repeat(2, 1fr); }
+  .series-selector { padding: 14px 16px; }
+}
 
 /* ── PARLAY BUILDER ──────────────────────── */
 .step-label-row {

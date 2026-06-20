@@ -126,7 +126,7 @@ const statHitrate     = document.getElementById("stat-hitrate");
 const statRoi         = document.getElementById("stat-roi");
 const statRecord      = document.getElementById("stat-record");
 const statPending     = document.getElementById("stat-pending");
-const seriesPills     = document.querySelectorAll(".series-pill");
+const seriesPills     = document.querySelectorAll(".series-card");
 
 // ── STATE ─────────────────────────────────────────────────────
 let currentUser   = null;
@@ -201,6 +201,9 @@ async function launchApp() {
   }
   loadingEl.classList.add("hidden");
   await Promise.all([loadPicks(), loadUFCEvents()]);
+
+  // Initialize Log Pick form state — show prompt since "All Picks" is default
+  updateLogFormForSeries();
 }
 
 googleSigninBtn.addEventListener("click", async () => {
@@ -344,7 +347,7 @@ document.getElementById("save-profile-btn").addEventListener("click", async () =
 
 signoutBtn.addEventListener("click", () => signOut(auth));
 
-// ── SERIES FILTER ─────────────────────────────────────────────
+// ── SERIES FILTER + LOG PICK LOCK ──────────────────────────────
 seriesPills.forEach(pill => {
   pill.addEventListener("click", () => {
     activeSeries = pill.dataset.series;
@@ -354,8 +357,34 @@ seriesPills.forEach(pill => {
     // Re-render dashboard if it's visible
     const dashTab = document.getElementById("tab-dashboard");
     if (dashTab && !dashTab.classList.contains("hidden")) renderDashboard();
+
+    // Lock the Log Pick form to this series
+    updateLogFormForSeries();
   });
 });
+
+function updateLogFormForSeries() {
+  const noSeriesPrompt = document.getElementById("no-series-prompt");
+  const logFormCard    = document.getElementById("log-form-card");
+  const lockedDisplay  = document.getElementById("locked-series-display");
+  const hiddenSelect   = document.getElementById("inp-series");
+
+  if (activeSeries === "all") {
+    // No specific series chosen — show prompt, hide form
+    noSeriesPrompt.classList.remove("hidden");
+    logFormCard.classList.add("hidden");
+    return;
+  }
+
+  // Specific series chosen — show form locked to that series
+  noSeriesPrompt.classList.add("hidden");
+  logFormCard.classList.remove("hidden");
+  lockedDisplay.textContent = activeSeries;
+  hiddenSelect.value = activeSeries;
+
+  // Trigger the existing series-dependent UI updates (MoV field, Prop field, parlay details)
+  hiddenSelect.dispatchEvent(new Event("change"));
+}
 
 function getFilteredPicks() {
   if (activeSeries === "all") return picks;
