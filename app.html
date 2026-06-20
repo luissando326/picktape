@@ -249,6 +249,7 @@
                     <option value="">— Select a fighter —</option>
                   </select>
                 </div>
+                <!-- Method of Victory series: simple method field -->
                 <div class="field field-sm" id="mov-type-field" style="display:none;">
                   <label>Method</label>
                   <select id="inp-mov-type">
@@ -257,6 +258,60 @@
                     <option value="DEC">Decision</option>
                   </select>
                 </div>
+              </div>
+
+              <!-- Practical Parlay / Long Shot Parlay: detailed pick builder -->
+              <div id="parlay-pick-details" class="parlay-pick-details hidden">
+                <div class="ppd-label">Pick Details <span class="ppd-note">(combine as needed)</span></div>
+                <div class="ppd-row">
+                  <div class="field field-sm">
+                    <label>Pick Type</label>
+                    <select id="inp-pick-type">
+                      <option value="">— None —</option>
+                      <option value="ML">Moneyline (ML)</option>
+                      <option value="KO">KO/TKO</option>
+                      <option value="Sub">Submission</option>
+                      <option value="DEC">Decision</option>
+                      <option value="Distance">Goes the Distance</option>
+                    </select>
+                  </div>
+                  <div class="field field-sm hidden" id="round-select-field">
+                    <label>Round</label>
+                    <select id="inp-round">
+                      <option value="Any">Any Round</option>
+                      <option value="1">Round 1</option>
+                      <option value="2">Round 2</option>
+                      <option value="3">Round 3</option>
+                      <option value="4">Round 4</option>
+                      <option value="5">Round 5</option>
+                    </select>
+                  </div>
+                  <div class="field field-sm">
+                    <label>O/U Rounds <span class="ppd-note">(optional)</span></label>
+                    <select id="inp-ou-rounds">
+                      <option value="">— None —</option>
+                      <option value="O1.5">Over 1.5</option>
+                      <option value="U1.5">Under 1.5</option>
+                      <option value="O2.5">Over 2.5</option>
+                      <option value="U2.5">Under 2.5</option>
+                      <option value="O3.5">Over 3.5</option>
+                      <option value="U3.5">Under 3.5</option>
+                      <option value="O4.5">Over 4.5</option>
+                      <option value="U4.5">Under 4.5</option>
+                    </select>
+                  </div>
+                  <div class="field field-sm">
+                    <label>Distance <span class="ppd-note">(optional)</span></label>
+                    <select id="inp-distance-yn">
+                      <option value="">— None —</option>
+                      <option value="Yes">Goes Distance: Yes</option>
+                      <option value="No">Goes Distance: No</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-top:10px;">
                 <div class="field field-sm">
                   <label>Leg Odds</label>
                   <input type="text" id="inp-leg-odds" placeholder="+150" />

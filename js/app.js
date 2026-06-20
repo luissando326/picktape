@@ -433,10 +433,70 @@ function showManualFallback() {
 }
 
 // ── LEGS STATE ────────────────────────────────────────────────
-let legs = []; // [{ fighter, opponent, odds, movType }]
+let legs = []; // [{ fighter, opponent, odds, movType, pickDetails }]
 
 function isMoV()  { return document.getElementById("inp-series").value === "Method of Victory"; }
 function isProp() { return document.getElementById("inp-series").value === "Prop Picks"; }
+function isParlaySeries() {
+  const s = document.getElementById("inp-series").value;
+  return s === "Practical Parlay" || s === "Long Shot Parlay";
+}
+
+// Build a readable label from the pick detail selections
+function buildPickDetailLabel() {
+  const pickType  = document.getElementById("inp-pick-type")?.value || "";
+  const round     = document.getElementById("inp-round")?.value || "";
+  const ouRounds  = document.getElementById("inp-ou-rounds")?.value || "";
+  const distance  = document.getElementById("inp-distance-yn")?.value || "";
+
+  const parts = [];
+  if (pickType) {
+    if ((pickType === "KO" || pickType === "Sub") && round && round !== "Any") {
+      parts.push(`${pickType} R${round}`);
+    } else if ((pickType === "KO" || pickType === "Sub") && round === "Any") {
+      parts.push(`${pickType} (Any Rd)`);
+    } else {
+      parts.push(pickType === "ML" ? "ML" : pickType);
+    }
+  }
+  if (ouRounds) {
+    const dir = ouRounds[0] === "O" ? "Over" : "Under";
+    const num = ouRounds.slice(1);
+    parts.push(`${dir} ${num} Rds`);
+  }
+  if (distance) {
+    parts.push(`Distance: ${distance}`);
+  }
+  return parts.join(" + ");
+}
+
+function getPickDetailsObject() {
+  return {
+    pickType: document.getElementById("inp-pick-type")?.value || "",
+    round:    document.getElementById("inp-round")?.value || "",
+    ouRounds: document.getElementById("inp-ou-rounds")?.value || "",
+    distance: document.getElementById("inp-distance-yn")?.value || "",
+  };
+}
+
+function resetPickDetailFields() {
+  if (document.getElementById("inp-pick-type"))    document.getElementById("inp-pick-type").value = "";
+  if (document.getElementById("inp-round"))        document.getElementById("inp-round").value = "Any";
+  if (document.getElementById("inp-ou-rounds"))    document.getElementById("inp-ou-rounds").value = "";
+  if (document.getElementById("inp-distance-yn"))  document.getElementById("inp-distance-yn").value = "";
+  document.getElementById("round-select-field")?.classList.add("hidden");
+}
+
+// Show round selector only when KO or Sub is chosen as pick type
+document.getElementById("inp-pick-type")?.addEventListener("change", () => {
+  const pickType = document.getElementById("inp-pick-type").value;
+  const roundField = document.getElementById("round-select-field");
+  if (pickType === "KO" || pickType === "Sub") {
+    roundField.classList.remove("hidden");
+  } else {
+    roundField.classList.add("hidden");
+  }
+});
 
 function updateParlayOdds() {
   const display = document.getElementById("parlay-odds-display");
@@ -471,12 +531,14 @@ function renderLegs() {
     row.className = "leg-item";
     // FIX #1: ESPN fighter names escaped defensively
     const movLabel = leg.movType ? ` · <span class="mov-tag">${esc(leg.movType)}</span>` : "";
+    const detailLabel = leg.pickDetailLabel ? ` · <span class="mov-tag">${esc(leg.pickDetailLabel)}</span>` : "";
     row.innerHTML = `
       <div class="leg-item-info">
         <span class="leg-num">${i + 1}</span>
         <span class="leg-fighter">${esc(leg.fighter)}</span>
         ${leg.opponent ? `<span class="leg-vs">vs ${esc(leg.opponent)}</span>` : ""}
         ${movLabel}
+        ${detailLabel}
       </div>
       <div class="leg-odds ${parseInt(leg.odds) > 0 ? "positive" : ""}">
         ${parseInt(leg.odds) > 0 ? "+" : ""}${parseInt(leg.odds)}
@@ -554,12 +616,15 @@ fightSelect.addEventListener("change", () => {
   });
 });
 
-// Series change → toggle MoV method field + Prop label field
+// Series change → toggle MoV method field + Prop label field + Parlay pick details
 document.getElementById("inp-series").addEventListener("change", () => {
-  const movField  = document.getElementById("mov-type-field");
-  const propField = document.getElementById("prop-label-field");
+  const movField    = document.getElementById("mov-type-field");
+  const propField   = document.getElementById("prop-label-field");
+  const parlayField = document.getElementById("parlay-pick-details");
   movField.style.display  = isMoV()  ? "flex" : "none";
   propField.classList.toggle("hidden", !isProp());
+  parlayField.classList.toggle("hidden", !isParlaySeries());
+  resetPickDetailFields();
   legs = [];
   renderLegs();
   updateAddLegBtn();
@@ -597,6 +662,17 @@ document.getElementById("add-leg-btn").addEventListener("click", () => {
     document.getElementById("form-error").textContent = "Please select a fighter and enter valid odds.";
     return;
   }
+
+  // Practical/Long Shot Parlay — require at least one pick detail to be set
+  if (isParlaySeries()) {
+    const details = getPickDetailsObject();
+    if (!details.pickType && !details.ouRounds && !details.distance) {
+      document.getElementById("form-error").classList.remove("hidden");
+      document.getElementById("form-error").textContent = "Please select at least one pick detail (pick type, over/under, or distance).";
+      return;
+    }
+  }
+
   document.getElementById("form-error").classList.add("hidden");
 
   const movType  = isMoV() ? document.getElementById("inp-mov-type").value : null;
@@ -604,7 +680,10 @@ document.getElementById("add-leg-btn").addEventListener("click", () => {
     ? (selectedFight.fighter1 === fighter ? selectedFight.fighter2 : selectedFight.fighter1)
     : "";
 
-  legs.push({ fighter, opponent, odds: odds.toString(), movType });
+  const pickDetails     = isParlaySeries() ? getPickDetailsObject() : null;
+  const pickDetailLabel = isParlaySeries() ? buildPickDetailLabel() : "";
+
+  legs.push({ fighter, opponent, odds: odds.toString(), movType, pickDetails, pickDetailLabel });
   renderLegs();
   updateAddLegBtn();
 
@@ -612,6 +691,7 @@ document.getElementById("add-leg-btn").addEventListener("click", () => {
   fighterSelect.innerHTML = '<option value="">— Select a fighter —</option>';
   fightSelect.value = "";
   document.getElementById("inp-leg-odds").value = "";
+  resetPickDetailFields();
   selectedFight = null;
 });
 
@@ -708,6 +788,7 @@ addPickBtn.addEventListener("click", async () => {
   // Build fighter label
   const fighter = legs.map(l => {
     if (isMoVSeries && l.movType) return `${l.fighter} by ${l.movType}`;
+    if (l.pickDetailLabel) return `${l.fighter} (${l.pickDetailLabel})`;
     return l.fighter;
   }).join(" + ");
 
