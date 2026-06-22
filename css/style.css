@@ -68,9 +68,11 @@ html, body {
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 900; font-size: 44px;
   letter-spacing: 0.06em; text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 6px; color: #e8e4dc;
 }
-.auth-logo span { color: var(--accent); }
+.auth-logo span { color: #e84040; }
+
+/* ── HEADER LOGO ─────────────────────────── */
 .auth-sub {
   font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--text3); margin-bottom: 36px;
@@ -103,8 +105,9 @@ html, body {
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 900; font-size: 26px;
   letter-spacing: 0.05em; text-transform: uppercase;
+  color: #e8e4dc;
 }
-.logo span { color: var(--accent); }
+.logo span { color: #e84040; }
 .header-sub { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); }
 .header-right { display: flex; align-items: center; gap: 14px; }
 .user-info { display: flex; align-items: center; gap: 8px; }
@@ -810,9 +813,9 @@ html, body {
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 900; font-size: 22px;
   letter-spacing: 0.06em; text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: 4px; color: #e8e4dc;
 }
-.footer-logo span { color: var(--accent); }
+.footer-logo span { color: #e84040; }
 .footer-presented {
   font-size: 11px; color: var(--text3);
   letter-spacing: 0.08em; text-transform: uppercase;
