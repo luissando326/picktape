@@ -520,6 +520,24 @@ html, body {
 .series-sp  { background: rgba(168,85,247,0.12); color: #a855f7; }
 .series-mov { background: rgba(240,168,64,0.12); color: var(--amber); }
 
+/* ── HEADER SOCIALS ──────────────────────── */
+.header-socials {
+  display: flex; align-items: center; gap: 12px;
+}
+.header-social-link {
+  color: var(--text3); transition: color 0.15s;
+  display: flex; align-items: center;
+}
+.header-social-link:hover { color: var(--text); }
+
+/* ── LEGAL PAGE HEADER ───────────────────── */
+.legal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 24px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.legal-header-right { display: flex; align-items: center; gap: 14px; }
+
 .community-btn {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 12px; font-weight: 700;
