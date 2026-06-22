@@ -13,6 +13,22 @@ import {
   query, orderBy, serverTimestamp, setDoc, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+// ── TOAST NOTIFICATIONS ───────────────────────────────────────
+function showToast(message, type = "success", duration = 3000) {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span class="toast-icon"></span><span>${message}</span>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("removing");
+    toast.addEventListener("animationend", () => toast.remove());
+  }, duration);
+}
+
 // ── SECURITY UTILITIES ────────────────────────────────────────
 
 // FIX #1 (CRITICAL): XSS sanitization
@@ -247,6 +263,7 @@ document.getElementById("save-username-btn").addEventListener("click", async () 
 
   userProfile = { username, displayName: username, photoURL: currentUser.photoURL || "" };
   usernameScreen.classList.add("hidden");
+  showToast("Welcome to PICKTAPE 🥊", "success");
   await launchApp();
 });
 
@@ -343,6 +360,7 @@ document.getElementById("save-profile-btn").addEventListener("click", async () =
 
   successEl.classList.remove("hidden");
   setTimeout(() => successEl.classList.add("hidden"), 3000);
+  showToast("Profile updated ✓", "success");
 });
 
 signoutBtn.addEventListener("click", () => signOut(auth));
@@ -855,6 +873,7 @@ addPickBtn.addEventListener("click", async () => {
     const id = await savePick(data);
     picks.unshift({ id, ...data });
     renderAll();
+    showToast("Pick logged ✓", "success");
 
     // Reset form
     eventSelect.value = "";
@@ -888,8 +907,10 @@ async function setResult(id, result) {
     const pick = picks.find(p => p.id === id);
     if (pick) pick.result = result;
     renderAll();
+    showToast(result === "won" ? "WIN recorded 🏆" : "Loss recorded", result === "won" ? "success" : "info");
   } catch (err) {
     console.error("Error updating:", err);
+    showToast("Error updating result", "error");
   }
 }
 
@@ -900,8 +921,10 @@ async function removePickFromUI(id) {
     await deletePick(id);
     picks = picks.filter(p => p.id !== id);
     renderAll();
+    showToast("Pick deleted", "info");
   } catch (err) {
     console.error("Error deleting:", err);
+    showToast("Error deleting pick", "error");
   }
 }
 
