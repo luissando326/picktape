@@ -100,7 +100,24 @@ html, body {
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 10;
 }
-.header-left { display: flex; align-items: baseline; gap: 14px; }
+.header-left {
+  display: flex; flex-direction: column;
+  align-items: flex-start; gap: 4px;
+}
+.header-socials {
+  display: flex; align-items: center; gap: 12px;
+}
+.header-social-link {
+  color: var(--text3); transition: color 0.15s;
+  display: flex; align-items: center; gap: 5px;
+  text-decoration: none;
+}
+.header-social-link:hover { color: var(--text2); }
+.header-social-handle {
+  font-size: 11px; letter-spacing: 0.04em;
+  color: var(--text3);
+}
+.header-social-link:hover .header-social-handle { color: var(--text2); }
 .logo {
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 900; font-size: 26px;
@@ -870,7 +887,8 @@ html, body {
   .header-sub { display: none; }
   .header-right { gap: 8px; }
   .user-name { display: none; }
-  .header-socials { gap: 8px; }
+  .header-social-handle { display: none; }
+  .header-socials { gap: 10px; }
   .signout-btn { padding: 5px 8px; font-size: 10px; }
   .community-btn { padding: 5px 10px; font-size: 11px; }
 
