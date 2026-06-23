@@ -945,6 +945,12 @@ html, body {
   .no-series-prompt { padding: 40px 16px; }
 }
 
+.odds-hint {
+  font-size: 10px; color: var(--text3);
+  margin-top: 5px; letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
 /* ── TOAST NOTIFICATIONS ─────────────────── */
 .toast-container {
   position: fixed; bottom: 24px; left: 50%;
