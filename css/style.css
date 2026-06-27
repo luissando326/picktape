@@ -968,6 +968,20 @@ html, body {
   margin-top: 5px; letter-spacing: 0.04em;
   line-height: 1.4;
 }
+.odds-link {
+  color: var(--accent); text-decoration: none;
+  font-weight: 600; transition: opacity 0.15s;
+}
+.odds-link:hover { opacity: 0.8; text-decoration: underline; }
+
+/* Visual cue when odds are auto-filled from cache */
+.odds-autofilled {
+  animation: oddsFlash 1.5s ease;
+}
+@keyframes oddsFlash {
+  0%   { background: rgba(78,203,113,0.25); border-color: var(--green); }
+  100% { background: var(--bg3); border-color: var(--border2); }
+}
 
 /* ── TOAST NOTIFICATIONS ─────────────────── */
 .toast-container {
